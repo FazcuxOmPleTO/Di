@@ -12,7 +12,7 @@ local Window = Rayfield:CreateWindow({
 
    ConfigurationSaving = {
       Enabled = true,
-      FolderName = IlhaBela, -- Create a custom folder for your hub/game
+      FolderName = calma, -- Create a custom folder for your hub/game
       FileName = "Lyrics"
    },
 
