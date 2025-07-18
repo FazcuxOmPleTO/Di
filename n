@@ -1,0 +1,61 @@
+local player = game:GetService("Players").LocalPlayer
+
+-- Função que zera o recoil dos valores dentro do Configuration
+local function zeroRecoil(tool)
+    if tool and tool:FindFirstChild("Configuration") then
+        local config = tool.Configuration
+        local props = {
+            "RecoilDecay",
+            "RecoilMax",
+            "RecoilMin",
+            "TotalRecoilMax"
+        }
+
+        for _, name in ipairs(props) do
+            local prop = config:FindFirstChild(name)
+            if prop and prop:IsA("NumberValue") then
+                prop.Value = 0.50
+            end
+        end
+    end
+end
+
+-- Função que monitora ferramentas no Character e no Backpack
+local function monitorTools()
+    -- Já aplica nas ferramentas existentes
+    for _, tool in ipairs(player.Backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            zeroRecoil(tool)
+        end
+    end
+    for _, tool in ipairs(player.Character:GetChildren()) do
+        if tool:IsA("Tool") then
+            zeroRecoil(tool)
+        end
+    end
+
+    -- Monitora novas ferramentas no Backpack
+    player.Backpack.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") then
+            task.wait(0.1)
+            zeroRecoil(child)
+        end
+    end)
+
+    -- Monitora novas ferramentas no Character
+    player.Character.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") then
+            task.wait(0.1)
+            zeroRecoil(child)
+        end
+    end)
+end
+
+-- Chama a função inicial
+monitorTools()
+
+-- Reconecta sempre que o personagem for recriado (após morrer)
+player.CharacterAdded:Connect(function()
+    task.wait(1) -- Espera o personagem carregar
+    monitorTools()
+end)
