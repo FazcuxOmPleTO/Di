@@ -1,0 +1,358 @@
+local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage")) :: ReplicatedStorage; 
+local TeleportService = cloneref(game:GetService("TeleportService")) :: TeleportService;
+local ScriptContext = cloneref(game:GetService("ScriptContext")) :: ScriptContext;
+local StarterPlayer = cloneref(game:GetService("StarterPlayer")) :: StarterPlayer;
+local GuiService = cloneref(game:GetService("GuiService")) :: GuiService;
+local RunService = cloneref(game:GetService("RunService")) :: RunService;
+local LogService = cloneref(game:GetService("LogService")) :: LogService;
+local Workspace = cloneref(game:GetService("Workspace")) :: Workspace;
+local CoreGui = cloneref(game:GetService("CoreGui")) :: CoreGui;
+local Players = cloneref(game:GetService("Players")) :: Players;
+--
+local LocalPlayer = Players.LocalPlayer;
+local GetClientName = LocalPlayer.Name;
+
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait();
+local PlayerScripts = LocalPlayer:WaitForChild("PlayerScripts");
+--
+local TesteAnti = ReplicatedStorage:FindFirstChild("TesteAnti");
+local ChatService = LocalPlayer.PlayerScripts:FindFirstChild("ChatService");
+local ChatService2 = StarterPlayer.StarterPlayerScripts:FindFirstChild("ChatService");
+local promptGui = CoreGui:FindFirstChild("RobloxPromptGui");
+local promptOverlay = promptGui and promptGui:FindFirstChild("promptOverlay");
+--
+
+local groupIds = {4738618, 35273711};
+local jogadoresNoGrupo = {};
+
+local function StaffDetector(player)
+    for Index, groupId in next, groupIds do
+        local success1, rank = pcall(function()
+            return player:GetRankInGroup(groupId);
+        end);
+
+        local success2, role = pcall(function()
+            return player:GetRoleInGroup(groupId);
+        end);
+
+        if success1 and success2 and rank ~= 0 and rank > 1 then
+            print(player.Name .. "Staff Detector: Found a suspicious player '" .. role .. "' (Rank ID: " .. rank .. ")");
+            jogadoresNoGrupo[player] = jogadoresNoGrupo[player] or {};
+            jogadoresNoGrupo[player][groupId] = {role = role, rank = rank};
+        end;
+    end;
+end;
+
+for Index, player in next, Players:GetPlayers() do
+    StaffDetector(player);
+end;
+
+Players.PlayerAdded:Connect(function(player)
+    StaffDetector(player);
+end);
+
+Players.PlayerRemoving:Connect(function(player)
+    local dados = jogadoresNoGrupo[player];
+    if dados then
+        for groupId, info in next, dados do
+            print(player.Name .. "Staff Detector: Suspicious player has left the game '" .. info.role .. "' (Rank ID: " .. info.rank .. ")");
+        end;
+        jogadoresNoGrupo[player] = nil;
+    end;
+end);
+
+local BlockedRemotes = {
+    "TesteAnti",
+    "ChatService",
+};
+
+local BlockedKeys = {
+    Fire                       = true,
+    Invoke                     = true,
+    FireServer                 = true,
+    InvokeServer               = true,
+    GetPropertyChangedSignal   = true,
+    WaitForChild               = true,
+    Destroy                    = true,
+    Remove                     = true,
+    IsDescendantOf             = true,
+    FindFirstChild             = true,
+    FindFirstChildWhichIsA     = true,
+    FindFirstChildOfClass      = true,
+    AncestryChanged            = true,
+    Parent                     = true,
+    Kick                       = true,
+};
+
+local BlockedInstances = {};
+--
+local function AssertFunction(v)
+    return type(v) == "function" and islclosure and islclosure(v) and not isexecutorclosure(v);
+end;
+--
+local AdvancedBypassAPI, Connections = {}, {}; do
+    function AdvancedBypassAPI:SetConnection(type, callback)
+        local GetTypeConnection = type:Connect(callback);
+        table.insert(Connections, GetTypeConnection);
+        return GetTypeConnection;
+    end;
+    --
+    function AdvancedBypassAPI:Disconnect(Data)
+        for Index, Handler in next, Connections do
+            if Handler == Data then
+                Handler:Disconnect();
+                table.remove(Connections, Index);
+                break;
+            end;
+        end;
+    end;
+    --
+    function AdvancedBypassAPI:DisconnectAll()
+        for Index, Handler in next, Connections do
+            Handler:Disconnect();
+        end;
+        table.clear(Connections);
+    end;
+    --
+    function AdvancedBypassAPI:ClientIDHadler(length)
+        local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        local randomString = "";
+        for i = 1, length do
+            local randomIndex = math.random(1, #chars);
+            randomString = randomString .. string.sub(chars, randomIndex, randomIndex);
+        end;
+        return randomString;
+    end;
+    --
+    function AdvancedBypassAPI:RejoinClient()
+        print("Rejoining...");
+            task.wait(0.1);
+            task.spawn(function()
+                if Players.NumPlayers > 1 then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer);
+                else
+                TeleportService:Teleport(game.PlaceI, LocalPlayer);
+            end;
+        end);
+        LocalPlayer:Kick("You just ascended -> rejoining...");
+    end;
+    --
+    AdvancedBypassAPI.__index = AdvancedBypassAPI;
+end;
+
+for Index, Connection_Error in next, getconnections(ScriptContext.Error) do
+    if Connection_Error and typeof(Connection_Error.Disable) == "function" then
+        task.wait();
+            pcall(function()
+            Connection_Error:Disable();
+        end);
+    end;
+end;
+
+for Index, LogServiceMessageOut_Error in next, getconnections(LogService.MessageOut) do
+        if LogServiceMessageOut_Error and typeof(LogServiceMessageOut_Error.Disconnect) == "function" then
+            task.wait();
+            pcall(function()
+            LogServiceMessageOut_Error:Disconnect();
+        end);
+    end;
+end;
+
+promptOverlay.DescendantAdded:Connect(function(descendant)
+    if descendant.Name == "ErrorTitle" then
+            descendant:GetPropertyChangedSignal("Text"):Connect(function()
+                if descendant.Text:sub(1, 12) == "Disconnected" then
+                AdvancedBypassAPI:RejoinClient();
+            end;
+        end);
+    end;
+end);
+
+GuiService.ErrorMessageChanged:Connect(function()
+  AdvancedBypassAPI:RejoinClient();
+end);
+
+LogService.MessageOut:Connect(function(Message)
+    if string.find(Message, "Server Kick Message:") then
+        AdvancedBypassAPI:RejoinClient();
+    end;
+end);
+
+for Index, name in ipairs(BlockedRemotes) do
+    local inst = Workspace:FindFirstChild(name) or ReplicatedStorage:FindFirstChild(name) or PlayerScripts:FindFirstChild(name) or nil;
+    if inst then
+        BlockedInstances[name] = inst;
+    end;
+end;
+
+local function makeDummySignal()
+    local dummy = {};
+    function dummy:Connect() return { Disconnect = function() end } end;
+    return dummy;
+end;
+
+local ChatService_props = {"Parent", "Disabled", "Name"};
+for Index, propName in ipairs(ChatService_props) do
+    local eventSignal = ChatService:GetPropertyChangedSignal(propName);
+    for Index, connection in next, getconnections(eventSignal) do
+        if typeof(connection.Disable) == "function" then
+            connection:Disable();
+        elseif typeof(connection.Disconnect) == "function" then
+            connection:Disconnect();
+        end;
+    end;
+end;
+
+for Index, propName in ipairs(ChatService_props) do
+    local eventSignal = ChatService2:GetPropertyChangedSignal(propName);
+    for Index, connection in next, getconnections(eventSignal) do
+        if typeof(connection.Disable) == "function" then
+            connection:Disable();
+        elseif typeof(connection.Disconnect) == "function" then
+            connection:Disconnect();
+        end;
+    end;
+end;
+
+local TesteAnti_props = {"Parent", "Name"};
+for Index, propName in ipairs(TesteAnti_props) do
+    local eventSignal = TesteAnti:GetPropertyChangedSignal(propName);
+    for Index, connection in next, getconnections(eventSignal) do
+        if typeof(connection.Disable) == "function" then
+            connection:Disable();
+        elseif typeof(connection.Disconnect) == "function" then
+            connection:Disconnect();
+        end;
+    end;
+end;
+
+local getrawmetatable = getrawmetatable or debug.getmetatable
+local make_writeable = make_writeable or setreadonly or changereadonly or change_writeable
+
+local gameMeta = getrawmetatable(game);
+local originalIndex = gameMeta.__index;
+local originalNamecall = gameMeta.__namecall;
+
+make_writeable(gameMeta, false);
+
+gameMeta.__index = newcclosure(function(self, key, ...)
+    if key == "Parent" and BlockedInstances[self.Name] and not checkcaller() then
+        local realInst = BlockedInstances[self.Name];
+        local originalParent = originalIndex(realInst, "Parent");
+        return originalParent or game;
+    end;
+    if key == "Kick" and self == LocalPlayer and BlockedKeys[key] and not checkcaller() then
+        return true;
+    end;
+
+    if BlockedKeys[key] and BlockedInstances[self.Name] and not checkcaller() then
+        if key == "GetPropertyChangedSignal" or key == "AncestryChanged" then
+            return function() return makeDummySignal() end;
+        elseif key == "WaitForChild" or key:match("^FindFirstChild") then
+            return function(_, childName, ...)
+                if childName == self.Name then
+                    return BlockedInstances[self.Name];
+                else
+                    return nil;
+                end;
+            end;
+        elseif key == "IsDescendantOf" then
+            return function() return true end;
+        else
+            return function() return nil end;
+        end;
+    end;
+
+    return originalIndex(self, key, ...)
+end);
+
+gameMeta.__namecall = newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    
+    if BlockedKeys[method] and not checkcaller() then
+        if method == "Kick" and self == LocalPlayer then
+            return true;
+        end;
+    end;
+
+    if BlockedKeys[method] and BlockedInstances[self.Name] and not checkcaller() then
+        if method == "GetPropertyChangedSignal" or method == "AncestryChanged" then
+            return makeDummySignal();
+        elseif method == "WaitForChild" or method:match("^FindFirstChild") then
+            local args = { ... };
+            local childName = args[1];
+            if childName == self.Name then
+                return BlockedInstances[self.Name];
+            else
+                return nil;
+            end;
+        elseif method == "IsDescendantOf" then
+            return true;
+        else 
+            return nil;
+        end;
+    end;
+
+    return originalNamecall(self, ...);
+end);
+
+make_writeable(gameMeta, true);
+
+local AntiSend_Warn; AntiSend_Warn = hookfunction(warn, function(...)
+    if checkcaller() then
+        return;
+    end;
+    return AntiSend_Warn(...);
+end);
+    
+local AntiSend_Print; AntiSend_Print = hookfunction(print, function(...)
+    if checkcaller() then
+        return;
+    end;
+    return AntiSend_Print(...);
+end);
+    
+local AntiSend_Error; AntiSend_Error = hookfunction(error, function(...)
+    if checkcaller() then
+        return;
+    end;
+    return AntiSend_Error(...);
+end);
+
+LocalPlayer.PlayerGui.ExpBar.ExpBar.Player.Text = AdvancedBypassAPI:ClientIDHadler(10);
+LocalPlayer.PlayerGui.ExpBar.ExpBar.User.Image = "rbxassetid://101753169521597";
+
+task.wait(1);
+
+if ChatService then
+    ChatService.Disabled = true;
+end;
+
+if ChatService2 then
+    ChatService2.Disabled = true;
+end;
+
+
+task.defer(function()
+    wait(1) -- Espera o anti-cheat inicializar
+    
+    -- Varre todos os scripts do jogador
+    for _, script in ipairs(LocalPlayer.PlayerScripts:GetDescendants()) do
+        if script:IsA("LocalScript") then
+            pcall(function()
+                local env = getfenv(script)
+                
+                -- u9 = anti_hitbox, u8 = anti_headsize (conforme análise do código)
+                if DISABLE_ANTI_HITBOX and env.u9 ~= nil then
+                    env.u9 = false
+                    print("[BYPASS PÓS] Anti-Hitbox desativado")
+                end
+                
+                if DISABLE_ANTI_HEADSIZE and env.u8 ~= nil then
+                    env.u8 = false
+                    print("[BYPASS PÓS] Anti-Headsize desativado")
+                end
+            end)
+        end
+    end
+end)
