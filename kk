@@ -272,7 +272,7 @@ local Button = Tab:CreateButton({
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local currentSize = Vector3.new(2.1, 2.1, 2.1) 
+local currentSize = Vector3.new(2.1, 2.1, 2.1) -- Edite esse valor manualmente se quiser
 
 -- Função para aplicar a hitbox grande
 local function applyHeadSize(char)
@@ -291,19 +291,25 @@ local function applyHeadSize(char)
     fakeHead.Massless = true
     fakeHead.Parent = char
 
-    -- calma
+    -- Altera a hitbox física real
     head.Size = currentSize
     head.Transparency = 1
     head.CanCollide = false
     head.Massless = true
 
-    -- colocar a cabeça no lugar da outra
+    -- Torna a face invisível
+    local face = head:FindFirstChildOfClass("Decal")
+    if face then
+        face.Transparency = 1
+    end
+
+    -- Solda visual na cabeça real
     local weld = Instance.new("WeldConstraint")
     weld.Part0 = head
     weld.Part1 = fakeHead
     weld.Parent = head
 
-    -- proteção contra scripts que tentam restaurar o tamanho original
+    -- Proteção contra scripts que tentam restaurar o tamanho original
     head:GetPropertyChangedSignal("Size"):Connect(function()
         if head.Size ~= currentSize then
             head.Size = currentSize
