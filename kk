@@ -55,6 +55,13 @@ loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/ref
 })
 
 local Button = Tab:CreateButton({
+   Name = " farmar rota",
+   Callback = function()
+loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/faz'),true))()
+   end,
+})
+
+local Button = Tab:CreateButton({
    Name = " farmar de entregador",
    Callback = function()
 loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/pizzayolo'),true))()
