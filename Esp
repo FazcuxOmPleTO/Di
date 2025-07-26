@@ -1,0 +1,112 @@
+-- básico
+if not game:IsLoaded() then game.Loaded:Wait() end
+
+-- parte dos service
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local lp = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+-- gui do incrível esp
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "ESP"
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0, 120, 0, 40)
+ToggleBtn.Position = UDim2.new(0, 20, 0, 100)
+ToggleBtn.Text = "ESP: ON"
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
+ToggleBtn.BorderSizePixel = 0
+ToggleBtn.Parent = ScreenGui
+ToggleBtn.AutoButtonColor = false
+
+-- drag funcional no touch
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    ToggleBtn.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+ToggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = ToggleBtn.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+ToggleBtn.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+        update(input)
+    end
+end)
+
+-- ESP
+local ESPEnabled = true
+local ESPFolder = Instance.new("Folder", game.CoreGui)
+ESPFolder.Name = "ESPFolder"
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    ESPEnabled = not ESPEnabled
+    ToggleBtn.Text = "ESP: " .. (ESPEnabled and "ON" or "OFF")
+    if not ESPEnabled then
+        for _,v in pairs(ESPFolder:GetChildren()) do v:Destroy() end
+    end
+end)
+
+function createESP(plr)
+    if not plr.Character or not plr.Character:FindFirstChild("Head") then return end
+
+    local Billboard = Instance.new("BillboardGui")
+    Billboard.Name = plr.Name
+    Billboard.Adornee = plr.Character.Head
+    Billboard.AlwaysOnTop = true
+    Billboard.Size = UDim2.new(0, 100, 0, 20)
+    Billboard.StudsOffset = Vector3.new(0, 2, 0)
+    Billboard.Parent = ESPFolder
+
+    local nameTag = Instance.new("TextLabel", Billboard)
+    nameTag.Size = UDim2.new(1, 0, 1, 0)
+    nameTag.BackgroundTransparency = 1
+    nameTag.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameTag.TextStrokeTransparency = 0.5
+    nameTag.Font = Enum.Font.SourceSansBold
+    nameTag.TextSize = 14
+    nameTag.Text = plr.Name
+end
+
+-- Loop
+RunService.RenderStepped:Connect(function()
+    if not ESPEnabled then return end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= lp and player.Character and player.Character:FindFirstChild("Head") then
+            if not ESPFolder:FindFirstChild(player.Name) then
+                createESP(player)
+            end
+        end
+    end
+
+    for _, esp in ipairs(ESPFolder:GetChildren()) do
+        local target = Players:FindFirstChild(esp.Name)
+        if not target or not target.Character or not target.Character:FindFirstChild("Head") then
+            esp:Destroy()
+        end
+    end
+end)
