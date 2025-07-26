@@ -274,7 +274,7 @@ local Tab = Window:CreateTab("Combate", 7113019423) -- Title, Image
 local Divider = Tab:CreateDivider()
 
 local Button = Tab:CreateButton({
-   Name = "Acerta izi 💥",
+   Name = "Acerta izi hitb",
    Callback = function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/hitbox"))()
    end,
@@ -286,7 +286,7 @@ local Button = Tab:CreateButton({
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local currentSize = Vector3.new(2.1, 2.1, 2.1) -- Edite esse valor manualmente se quiser
+local currentSize = Vector3.new(2.3, 2.3, 2.3) -- Edite esse valor manualmente se quiser
 
 -- Função para aplicar a hitbox grande
 local function applyHeadSize(char)
@@ -359,6 +359,13 @@ local Button = Tab:CreateButton({
    Name = "Cerebro Grande",
    Callback = function()
 loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/l'),true))()
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Recoil Baixinho",
+   Callback = function()
+loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/tim'),true))()
    end,
 })
 
