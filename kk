@@ -30,18 +30,18 @@ local Window = Rayfield:CreateWindow({
       FileName = "Chave", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
       SaveKey = false, -- The user's key will be saved, but if you change the key, they will be unable to use your script
       GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"delapaz"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+      Key = {"tiopaulo"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
    }
 })
 
 Rayfield:Notify({
    Title = "Agradecimento",
-   Content = "Obrigado por adquirir nosso hack!",
+   Content = "paraem de xitar seus vermes!",
    Duration = 6.5,
    Image = 4483362458,
 })
 
-local Tab = Window:CreateTab("Utilidades", 97682995973876) -- Title, Image
+local Tab = Window:CreateTab("Básico", 97682995973876) -- Title, Image
 local Divider = Tab:CreateDivider()
 
 local Paragraph = Tab:CreateParagraph({Title = "Funções Atualizadas 02/05/25", Content = "_____________________________"})
@@ -143,6 +143,13 @@ loadstring(game:HttpGet(('https://raw.githubusercontent.com/EdgeIY/infiniteyield
 
 local Tab = Window:CreateTab("Esp", 12907910012) -- Title, Image
 local Divider = Tab:CreateDivider()
+
+local Button = Tab:CreateButton({
+   Name = " ESP Player",
+   Callback = function()
+loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/Esp'),true))()
+   end,
+})
 
 local Button = Tab:CreateButton({
    Name = "Esp Carros",
