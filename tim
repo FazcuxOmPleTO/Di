@@ -1,0 +1,114 @@
+
+
+-- Instances:
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local TextLabel = Instance.new("TextLabel")
+local TextLabel_2 = Instance.new("TextLabel")
+local TextButton = Instance.new("TextButton")
+
+--Properties:
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.new(0, 0, 0) -- Cor invisÃ­vel
+Frame.BackgroundTransparency = 1 -- Define a transparÃªncia para 100% (completamente transparente)
+Frame.Position = UDim2.new(0.369825214, 0, 0.423832893, 0)
+Frame.Size = UDim2.new(0, 316, 0, 325)
+Frame.Active = true
+Frame.Draggable = true
+
+TextLabel.Parent = Frame
+TextLabel.BackgroundColor3 = Color3.new(1, 1, 1) -- Cor branca
+TextLabel.BackgroundTransparency = 0.9 -- Define a transparÃªncia para 90%
+TextLabel.Size = UDim2.new(0, 316, 0, 50)
+TextLabel.Font = Enum.Font.SciFi
+TextLabel.Text = "Time Stop GUI"
+TextLabel.TextColor3 = Color3.new(1, 1, 1) -- Cor branca
+TextLabel.TextSize = 30.000
+
+TextLabel_2.Parent = Frame
+TextLabel_2.BackgroundColor3 = Color3.new(1, 1, 1) -- Cor branca
+TextLabel_2.BackgroundTransparency = 0.9 -- Define a transparÃªncia para 90%
+TextLabel_2.Position = UDim2.new(0, 0, 0.846153915, 0)
+TextLabel_2.Size = UDim2.new(0, 316, 0, 50)
+TextLabel_2.Font = Enum.Font.SciFi
+TextLabel_2.Text = "Criado por lyrics.zx#0000"
+TextLabel_2.TextColor3 = Color3.new(1, 1, 1) -- Cor branca
+TextLabel_2.TextSize = 28.000
+
+TextButton.Parent = Frame
+TextButton.BackgroundColor3 = Color3.new(0, 0, 0) -- Cor invisÃ­vel
+TextButton.BackgroundTransparency = 1 -- Define a transparÃªncia para 100% (completamente transparente)
+TextButton.Position = UDim2.new(0.0664556995, 0, 0.212307781, 0)
+TextButton.Size = UDim2.new(0, 274, 0, 184)
+TextButton.Font = Enum.Font.Cartoon
+TextButton.Text = "Activate!"
+TextButton.TextColor3 = Color3.new(1, 1, 1) -- Cor branca
+TextButton.TextSize = 50.000
+
+local Effect = Instance.new("ColorCorrectionEffect")
+Effect.Parent = game.Lighting
+Effect.Saturation = 3
+Effect.Brightness = 0
+Effect.Contrast = 0
+
+local toggle = false
+
+function toggleEffect()
+    toggle = not toggle -- Alternar o estado do toggle
+    
+    if toggle == true then
+        settings().Network.IncomingReplicationLag = 1000
+        Effect.Enabled = true
+        TextButton.Text = "Desativar!"
+    else
+        settings().Network.IncomingReplicationLag = 0
+        Effect.Enabled = false
+        TextButton.Text = "Ativa ai verme!"
+    end
+end
+
+TextButton.MouseButton1Down:Connect(toggleEffect)
+
+-- verificar variável global
+if _G.SendNotifications == nil then
+    -- Define a variÃ¡vel como true, indicando que notificaÃ§Ãµes devem ser enviadas
+    _G.SendNotifications = true
+end
+
+-- variável global SendNotifications estÃ¡ definida
+if _G.SendNotifications == nil then
+    -- Define a variÃ¡vel como true, indicando que notificaÃ§Ãµes devem ser enviadas
+    _G.SendNotifications = true
+end
+
+-- função para enviar uma notificação
+local function sendNotification(message)
+    if _G.SendNotifications then
+        -- instÃ¢ncia de screengui
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+        
+        -- TextLabel
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(0, 300, 0, 50) -- Tamanho mediano
+        textLabel.Position = UDim2.new(1, -310, 1, -60) -- Canto inferior direito
+        textLabel.AnchorPoint = Vector2.new(1, 1) -- Ancora no canto inferior direito
+        textLabel.BackgroundTransparency = 0.5 -- TransparÃªncia de fundo
+        textLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Cor de fundo preta
+        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- Cor do texto branca
+        textLabel.Font = Enum.Font.SourceSansBold -- Fonte do texto
+        textLabel.TextSize = 24 -- Tamanho do texto
+        textLabel.Text = message
+        textLabel.Parent = screenGui
+        
+        -- tantantanan
+        wait(5)
+        screenGui:Destroy()
+    end
+end
+
+-- Envia a mensagem desejada
+sendNotification("Xitando? sei nÃ£o viu")
