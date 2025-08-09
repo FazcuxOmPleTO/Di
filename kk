@@ -30,7 +30,7 @@ local Window = Rayfield:CreateWindow({
       FileName = "Chave", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
       SaveKey = false, -- The user's key will be saved, but if you change the key, they will be unable to use your script
       GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"tiopaulo"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+      Key = {"arceus"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
    }
 })
 
@@ -51,6 +51,53 @@ local Button = Tab:CreateButton({
    Name = " Ative isso é obrigatório se não o ban vem",
    Callback = function()
 loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/ant'),true))()
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "desativar o autojump",
+   Callback = function()
+auto-jump off
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local function disableAutoJump(hum)
+    if hum and hum:IsA("Humanoid") then
+        pcall(function() hum.AutoJumpEnabled = false end)
+        -- Se alguém reativar, volta a false
+        hum:GetPropertyChangedSignal("AutoJumpEnabled"):Connect(function()
+            if hum.AutoJumpEnabled then
+                pcall(function() hum.AutoJumpEnabled = false end)
+            end
+        end)
+    end
+end
+
+local function onCharacter(char)
+    local hum = char:FindFirstChildOfClass("Humanoid") or char:WaitForChild("Humanoid", 5)
+    disableAutoJump(hum)
+end
+
+if player.Character then
+    onCharacter(player.Character)
+end
+player.CharacterAdded:Connect(onCharacter)
+
+-- Remove o botão de pulo da UI (isso evita que o autojump ative por toque)
+local function removeJumpButton()
+    local PlayerModule = player:FindFirstChild("PlayerScripts")
+    if PlayerModule then
+        local ControlModule = PlayerModule:FindFirstChild("PlayerModule")
+        if ControlModule and ControlModule:FindFirstChild("TouchJump") then
+            ControlModule.TouchJump:Destroy()
+        end
+    end
+end
+
+removeJumpButton()
+
+-- Fallback para garantir que o botão não reapareça
+game:GetService("RunService").RenderStepped:Connect(removeJumpButton)
    end,
 })
 
