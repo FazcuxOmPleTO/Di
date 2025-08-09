@@ -57,70 +57,155 @@ loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/ref
 local Button = Tab:CreateButton({
    Name = "shiftlock",
    Callback = function()
+-- Shift Lock Mobile (versão ajustada)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
 -- GUI
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ShiftLockGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = playerGui
 
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Parent = ScreenGui
-ToggleButton.Size = UDim2.new(0, 120, 0, 40)
-ToggleButton.Position = UDim2.new(0, 10, 0.75, 0)
+ToggleButton.Size = UDim2.new(0, 140, 0, 48)
+ToggleButton.Position = UDim2.new(0, 12, 0.75, 0)
 ToggleButton.Text = "Shift Lock OFF"
 ToggleButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleButton.TextScaled = true
 ToggleButton.BorderSizePixel = 0
 ToggleButton.Active = true
-ToggleButton.Draggable = false -- a gente vai fazer o sistema de drag na mão
+ToggleButton.Draggable = false
 
 -- Variáveis
-local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
-local runService = game:GetService("RunService")
-local uis = game:GetService("UserInputService")
 local shiftLocked = false
-local connection
+local lockConnection = nil
+local pausedByVehicle = false
 
--- Função: verificar se está num veículo
-local function isInVehicle()
+-- Helpers
+local function getHumanoid()
 	local char = player.Character
-	if not char then return false end
+	if not char then return nil end
+	return char:FindFirstChildOfClass("Humanoid")
+end
 
-	for _, part in ipairs(char:GetDescendants()) do
-		if part:IsA("VehicleSeat") and part.Occupant == char:FindFirstChild("Humanoid") then
-			return true
-		end
+local function isSeated()
+	local humanoid = getHumanoid()
+	if not humanoid then return false end
+	-- Verifica SeatPart (Seat/VehicleSeat) ou estado sentado
+	if humanoid.SeatPart then
+		return true
+	end
+	local ok, state = pcall(function() return humanoid:GetState() end)
+	if ok and state == Enum.HumanoidStateType.Seated then
+		return true
 	end
 	return false
 end
 
--- Função: trava o personagem olhando para onde a câmera aponta
+-- Função que trava o personagem olhando pra câmera (apenas quando NÃO estiver sentado)
 local function lockCharacterToCamera()
-	if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
-	if isInVehicle() then return end
+	local char = player.Character
+	if not char then return end
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	if isSeated() then return end
 
-	local root = player.Character.HumanoidRootPart
 	local camLook = camera.CFrame.LookVector
-	local flatLook = Vector3.new(camLook.X, 0, camLook.Z).Unit
+	local flat = Vector3.new(camLook.X, 0, camLook.Z)
+	if flat.Magnitude == 0 then return end
+	local flatUnit = flat.Unit
 
-	root.CFrame = CFrame.new(root.Position, root.Position + flatLook)
+	root.CFrame = CFrame.new(root.Position, root.Position + flatUnit)
 end
 
--- Alternar Shift Lock
-local function toggleShiftLock()
-	shiftLocked = not shiftLocked
-	ToggleButton.Text = shiftLocked and "Shift Lock ON" or "Shift Lock OFF"
+-- Ativar / desativar Shift Lock
+local function enableShiftLock()
+	if lockConnection then lockConnection:Disconnect() end
+	lockConnection = RunService.RenderStepped:Connect(lockCharacterToCamera)
+	shiftLocked = true
+	ToggleButton.Text = "Shift Lock ON"
+end
 
-	if shiftLocked then
-		connection = runService.RenderStepped:Connect(lockCharacterToCamera)
-	else
-		if connection then connection:Disconnect() end
+local function disableShiftLock()
+	if lockConnection then
+		lockConnection:Disconnect()
+		lockConnection = nil
 	end
+	shiftLocked = false
+	ToggleButton.Text = "Shift Lock OFF"
 end
 
-ToggleButton.MouseButton1Click:Connect(toggleShiftLock)
+ToggleButton.MouseButton1Click:Connect(function()
+	if shiftLocked then
+		-- desativação manual não deve deixar a flag pausedByVehicle ativa
+		pausedByVehicle = false
+		disableShiftLock()
+	else
+		-- se estiver sentado, não ativa (evita bagunçar o carro)
+		if isSeated() then
+			-- opcional: mostrar mensagem curta, por simplicidade só não ativa
+			return
+		end
+		enableShiftLock()
+	end
+end)
 
--- Função de arrastar com o dedo
+-- Bind de evento Humanoid.Seated para detectar de forma confiável entrar/sair de assento
+local function bindHumanoidEvents(humanoid)
+	if not humanoid then return end
+
+	humanoid.Seated:Connect(function(active, seat)
+		if active then
+			-- entrou no assento
+			if shiftLocked then
+				pausedByVehicle = true
+				disableShiftLock()
+			end
+		else
+			-- saiu do assento
+			if pausedByVehicle then
+				-- retoma só se realmente foi pausado pelo veículo
+				pausedByVehicle = false
+				-- dá uma pequena espera para o character "desprender" do carro
+				task.delay(0.08, function()
+					if not isSeated() then
+						enableShiftLock()
+					end
+				end)
+			end
+		end
+	end)
+end
+
+player.CharacterAdded:Connect(function(char)
+	local humanoid = char:WaitForChild("Humanoid", 5)
+	if humanoid then
+		bindHumanoidEvents(humanoid)
+	end
+end)
+
+-- caso já exista character ao executar o script
+if player.Character then
+	local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+	if humanoid then bindHumanoidEvents(humanoid) end
+end
+
+-- Safety fallback: se por algum motivo o evento não disparar, checagem leve
+RunService.Heartbeat:Connect(function()
+	if shiftLocked and isSeated() then
+		pausedByVehicle = true
+		disableShiftLock()
+	end
+end)
+
+-- Função de arrastar (touch/mouse)
 local dragging = false
 local dragInput, dragStart, startPos
 
@@ -144,7 +229,7 @@ ToggleButton.InputChanged:Connect(function(input)
 	end
 end)
 
-uis.InputChanged:Connect(function(input)
+UserInputService.InputChanged:Connect(function(input)
 	if input == dragInput and dragging then
 		local delta = input.Position - dragStart
 		ToggleButton.Position = UDim2.new(
