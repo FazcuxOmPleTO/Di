@@ -1,0 +1,41 @@
+-- Script para executor: desativa auto-jump no mobile sem travar câmera
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local function disableAutoJump(hum)
+    if hum and hum:IsA("Humanoid") then
+        pcall(function() hum.AutoJumpEnabled = false end)
+        -- Se alguém reativar, volta a false
+        hum:GetPropertyChangedSignal("AutoJumpEnabled"):Connect(function()
+            if hum.AutoJumpEnabled then
+                pcall(function() hum.AutoJumpEnabled = false end)
+            end
+        end)
+    end
+end
+
+local function onCharacter(char)
+    local hum = char:FindFirstChildOfClass("Humanoid") or char:WaitForChild("Humanoid", 5)
+    disableAutoJump(hum)
+end
+
+if player.Character then
+    onCharacter(player.Character)
+end
+player.CharacterAdded:Connect(onCharacter)
+
+-- Remove o botão de pulo da UI (isso evita que o autojump ative por toque)
+local function removeJumpButton()
+    local PlayerModule = player:FindFirstChild("PlayerScripts")
+    if PlayerModule then
+        local ControlModule = PlayerModule:FindFirstChild("PlayerModule")
+        if ControlModule and ControlModule:FindFirstChild("TouchJump") then
+            ControlModule.TouchJump:Destroy()
+        end
+    end
+end
+
+removeJumpButton()
+
+-- Fallback para garantir que o botão não reapareça
+game:GetService("RunService").RenderStepped:Connect(removeJumpButton)
