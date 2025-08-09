@@ -64,7 +64,7 @@ loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/ref
 local Button = Tab:CreateButton({
    Name = "desativar autojump",
    Callback = function()
-loadstring(game:HttpGet(('https'),true))()
+loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/desable'),true))()
    end,
 })
 
