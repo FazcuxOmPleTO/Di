@@ -50,7 +50,7 @@ local Divider = Tab:CreateDivider()
 local Button = Tab:CreateButton({
    Name = " Ative isso é obrigatório se não o ban vem",
    Callback = function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/desable'),true))()
+loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/ant'),true))()
    end,
 })
 
@@ -64,7 +64,7 @@ loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/ref
 local Button = Tab:CreateButton({
    Name = "desativar autojump",
    Callback = function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/faz'),true))()
+loadstring(game:HttpGet(('https'),true))()
    end,
 })
 
