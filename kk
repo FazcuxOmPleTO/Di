@@ -301,7 +301,7 @@ local Button = Tab:CreateButton({
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local currentSize = Vector3.new(3.3, 3.3, 3.3) -- Edite esse valor manualmente se quiser
+local currentSize = Vector3.new(2.6, 2.6, 2.6) -- Edite esse valor manualmente se quiser
 
 -- Função para aplicar a hitbox grande
 local function applyHeadSize(char)
