@@ -378,7 +378,7 @@ loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/ref
 })
 
 local Button = Tab:CreateButton({
-   Name = "Recoil Baixinho",
+   Name = "Time Stop",
    Callback = function()
 loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/tim'),true))()
    end,
