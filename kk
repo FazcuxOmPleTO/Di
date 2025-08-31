@@ -30,7 +30,7 @@ local Window = Rayfield:CreateWindow({
       FileName = "Chave", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
       SaveKey = false, -- The user's key will be saved, but if you change the key, they will be unable to use your script
       GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"arceus"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+      Key = {"codex"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
    }
 })
 
@@ -44,7 +44,7 @@ Rayfield:Notify({
 local Tab = Window:CreateTab("Básico", 97682995973876) -- Title, Image
 local Divider = Tab:CreateDivider()
 
-local Paragraph = Tab:CreateParagraph({Title = "Funções Atualizadas 02/05/25", Content = "_____________________________"})
+local Paragraph = Tab:CreateParagraph({Title = "Goats🏳️‍🌈", Content = "_____________________________"})
 local Divider = Tab:CreateDivider()
 
 local Button = Tab:CreateButton({
@@ -287,6 +287,82 @@ game:GetService("ReplicatedStorage"):WaitForChild("InventarioSystem"):WaitForChi
 
 local Tab = Window:CreateTab("Combate", 7113019423) -- Title, Image
 local Divider = Tab:CreateDivider()
+
+local Button = Tab:CreateButton({
+   Name = "Headsize HAZE PVP",
+   Callback = function()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local currentSize = Vector3.new(2.8, 2.8, 2.8) -- tamanho final da Cabesa
+
+-- Função para aplicar o efeito de "cabeça grande"
+local function applyCabesa(char)
+    task.wait(0.1)
+    local cabesa = char:FindFirstChild("Cabesa")
+    if not cabesa or char == LocalPlayer.Character then return end
+    if char:FindFirstChild("FakeVisualCabesa") then return end
+
+    -- Clona a Cabesa visual
+    local fake = cabesa:Clone()
+    fake.Name = "FakeVisualCabesa"
+    fake.Size = Vector3.new(1, 1, 1)
+    fake.Transparency = 0
+    fake.CanCollide = false
+    fake.Anchored = false
+    fake.Massless = true
+    fake.Parent = char
+
+    -- Altera a Cabesa física real
+    cabesa.Size = currentSize
+    cabesa.Transparency = 1
+    cabesa.CanCollide = false
+    cabesa.Massless = true
+
+    -- Torna a face invisível
+    local face = cabesa:FindFirstChildOfClass("Decal")
+    if face then
+        face.Transparency = 1
+    end
+
+    -- Solda visual na Cabesa real
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = cabesa
+    weld.Part1 = fake
+    weld.Parent = cabesa
+
+    -- Proteção contra scripts que tentam restaurar o tamanho original
+    cabesa:GetPropertyChangedSignal("Size"):Connect(function()
+        if cabesa.Size ~= currentSize then
+            cabesa.Size = currentSize
+        end
+    end)
+end
+
+-- Aplica para todos os players atuais
+for _, player in pairs(Players:GetPlayers()) do
+    local char = workspace:FindFirstChild(player.Name)
+    if char then
+        applyCabesa(char)
+    end
+end
+
+-- Monitora novos players e respawns
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(char)
+        task.wait(0.5)
+        applyCabesa(char)
+    end)
+end)
+
+for _, player in pairs(Players:GetPlayers()) do
+    player.CharacterAdded:Connect(function(char)
+        task.wait(0.5)
+        applyCabesa(char)
+    end)
+end
+   end,
+})
 
 local Button = Tab:CreateButton({
    Name = "Acerta izi hitb",
