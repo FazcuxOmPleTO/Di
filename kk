@@ -30,12 +30,12 @@ local Window = Rayfield:CreateWindow({
       FileName = "Chave", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
       SaveKey = false, -- The user's key will be saved, but if you change the key, they will be unable to use your script
       GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"del"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+      Key = {"Batman"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
    }
 })
 
 Rayfield:Notify({
-   Title = "Agradecimento",
+   Title = "vlw cumparsa",
    Content = "paraem de xitar seus vermes!",
    Duration = 6.5,
    Image = 4483362458,
@@ -287,137 +287,6 @@ game:GetService("ReplicatedStorage"):WaitForChild("InventarioSystem"):WaitForChi
 
 local Tab = Window:CreateTab("Combate", 7113019423) -- Title, Image
 local Divider = Tab:CreateDivider()
-
-local Button = Tab:CreateButton({
-   Name = "Headsize HAZE PVP",
-   Callback = function()
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local Camera = workspace.CurrentCamera
-local VirtualInputManager = game:GetService("VirtualInputManager")
-
-local LocalPlayer = Players.LocalPlayer
-local currentSize = Vector3.new(2.8, 2.8, 2.8) -- tamanho final da Cabesa
-
--- Configs do FOV
-local fov = 9
-local maxDistance = 400
-local teamCheck = false
-
--- Verifica se player está vivo
-local function isPlayerAlive(player)
-    local character = player.Character
-    if character and character:FindFirstChild("Humanoid") then
-        return character.Humanoid.Health > 0
-    end
-    return false
-end
-
--- Sistema da Cabesa aumentada
-local function applyCabesa(char)
-    task.wait(0.1)
-    local cabesa = char:FindFirstChild("Cabesa")
-    if not cabesa or char == LocalPlayer.Character then return end
-    if char:FindFirstChild("FakeVisualCabesa") then return end
-
-    -- Clona a Cabesa visual
-    local fake = cabesa:Clone()
-    fake.Name = "FakeVisualCabesa"
-    fake.Size = Vector3.new(1, 1, 1)
-    fake.Transparency = 0
-    fake.CanCollide = false
-    fake.Anchored = false
-    fake.Massless = true
-    fake.Parent = char
-
-    -- Altera a Cabesa física real
-    cabesa.Size = currentSize
-    cabesa.Transparency = 1
-    cabesa.CanCollide = false
-    cabesa.Massless = true
-
-    -- Torna a face invisível
-    local face = cabesa:FindFirstChildOfClass("Decal")
-    if face then
-        face.Transparency = 1
-    end
-
-    -- Solda visual na Cabesa real
-    local weld = Instance.new("WeldConstraint")
-    weld.Part0 = cabesa
-    weld.Part1 = fake
-    weld.Parent = cabesa
-
-    -- Proteção contra scripts que tentam restaurar o tamanho original
-    cabesa:GetPropertyChangedSignal("Size"):Connect(function()
-        if cabesa.Size ~= currentSize then
-            cabesa.Size = currentSize
-        end
-    end)
-end
-
--- Aplica para todos os players atuais
-for _, player in pairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer then
-        local char = player.Character or player.CharacterAdded:Wait()
-        applyCabesa(char)
-    end
-end
-
--- Monitora novos players
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(char)
-        task.wait(0.5)
-        applyCabesa(char)
-    end)
-end)
-
--- Função para achar o player mais perto dentro do FOV (Cabesa aumentada)
-local function getClosestPlayerInFOV()
-    local nearest = nil
-    local shortestDistance = math.huge
-    local centerScreen = Camera.ViewportSize / 2
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and isPlayerAlive(player) and (not teamCheck or player.Team ~= LocalPlayer.Team) then
-            local char = player.Character
-            if char then
-                local cabesa = char:FindFirstChild("Cabesa")
-                if cabesa then
-                    local screenPos, onScreen = Camera:WorldToViewportPoint(cabesa.Position)
-                    local distance = (Vector2.new(screenPos.X, screenPos.Y) - centerScreen).Magnitude
-
-                    if onScreen and distance < fov and distance < shortestDistance then
-                        shortestDistance = distance
-                        nearest = player
-                    end
-                end
-            end
-        end
-    end
-
-    return nearest
-end
-
--- Auto Mouse1
-local function autoMouse1()
-    local targetPlayer = getClosestPlayerInFOV()
-    if targetPlayer then
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        task.wait(0.05)
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-    end
-end
-
--- Loop principal
-RunService.RenderStepped:Connect(function()
-    local closestPlayer = getClosestPlayerInFOV()
-    if closestPlayer then
-        autoMouse1()
-    end
-end)
-   end,
-})
 
 local Button = Tab:CreateButton({
    Name = "Acerta izi hitb",
