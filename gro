@@ -1,0 +1,67 @@
+local Players = game:GetService('Players')
+local RunService = game:GetService('RunService')
+local Workspace = game:GetService('Workspace')
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local VirtualUser = game:GetService("VirtualUser")
+
+-- Novas posições na tela para simular o click
+local FirePositions = {
+    Vector2.new(-0.707, -478),
+    Vector2.new(-0.654, -184)
+}
+local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+local centerTolerance = 30
+local maxDistance = 300 -- studs
+local aimPartName = "Cabesa" -- nome da cabeça do seu jogo
+
+-- Função para checar se é possível “ver” o inimigo (raycast)
+local function canSeeTarget(targetPart)
+    local origin = Camera.CFrame.Position
+    local direction = (targetPart.Position - origin)
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character} -- Ignorar jogador local
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+    local raycastResult = Workspace:Raycast(origin, direction, raycastParams)
+    if raycastResult then
+        if raycastResult.Instance:IsDescendantOf(targetPart.Parent) then
+            return true
+        else
+            return false
+        end
+    else
+        return true
+    end
+end
+
+-- Verifica se a parte inimiga está no centro da tela
+local function IsAtScreenCenter(screenPos)
+    return (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude <= centerTolerance
+end
+
+RunService.RenderStepped:Connect(function()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local targetPart = player.Character:FindFirstChild(aimPartName)
+            if targetPart and not player.Character:FindFirstChild("FakeVisualCabesa") then
+                local humanoid = player.Character:FindFirstChild("Humanoid")
+                if humanoid and humanoid.Health > 0 then
+                    local distance = (LocalPlayer.Character.HumanoidRootPart.Position - targetPart.Position).Magnitude
+                    if distance <= maxDistance then
+                        local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+                        if onScreen and IsAtScreenCenter(screenPos) then
+                            if canSeeTarget(targetPart) then
+                                -- Atira nas novas posições definidas sem parar o movimento
+                                for _, pos in ipairs(FirePositions) do
+                                    VirtualUser:CaptureController()
+                                    VirtualUser:ClickButton1(Vector2.new(pos.X, pos.Y))
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
