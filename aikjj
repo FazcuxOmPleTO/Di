@@ -6,7 +6,7 @@ local Workspace = game:GetService("Workspace")
 -- Configurações  
 local aimPartName = "Cabesa"  
 local fovRadius = 45 -- pixels  
-local smoothness = 0.5 -- quanto menor, mais rápido a mira gruda (0.05 bem rápido / 0.2 mais lento)
+local smoothness = 1 -- quanto menor, mais rápido a mira gruda (0.05 bem rápido / 0.2 mais lento)
 
 local function canSeeTarget(targetPart)  
     local origin = Workspace.CurrentCamera.CFrame.Position  
