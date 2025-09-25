@@ -143,7 +143,7 @@ local UserInputService = game:GetService("UserInputService")
 
 -- Configurações
 local aimPartName = "Cabesa"
-local fovRadius = 70 -- pixels
+local fovRadius = 50 -- pixels
 local smoothness = 0.7 -- Suavidade
 local maxTurnSpeed = 60 -- Velocidade máxima de rotação
 local aimEnabled = true -- Controle para ativar/desativar aimbot
@@ -239,7 +239,7 @@ task.wait(6)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local currentSize = Vector3.new(2.0, 2.0, 2.0) -- tamanho final da Cabesa
+local currentSize = Vector3.new(2.2, 2.2, 2.2) -- tamanho final da Cabesa
 
 local function applyCabesa(char)
     task.wait(0.1)
