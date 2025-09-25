@@ -1,102 +1,96 @@
-local Players = game:GetService('Players')
-local RunService = game:GetService('RunService')
-local Workspace = game:GetService('Workspace')
+-- Primeiro script: Bypass do anticheat
+task.wait(2) -- espera o anticheat carregar primeiro
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
-local VirtualUser = game:GetService("VirtualUser")
 
--- Novas posições na tela para simular o click
-local FirePositions = {
-    Vector2.new(-0.707, -478),
-    Vector2.new(-0.654, -184)
-}
-local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-local centerTolerance = 30
-local maxDistance = 300 -- studs
-local aimPartName = "Cabesa" -- nome da cabeça do seu jogo
+-- pega o remote ExploitBan
+local ExploitBan = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ExploitBan")
 
--- Função para checar se é possível “ver” o inimigo (raycast)
-local function canSeeTarget(targetPart)
-    local origin = Camera.CFrame.Position
-    local direction = (targetPart.Position - origin)
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character} -- Ignorar jogador local
-    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-
-    local raycastResult = Workspace:Raycast(origin, direction, raycastParams)
-    if raycastResult then
-        if raycastResult.Instance:IsDescendantOf(targetPart.Parent) then
-            return true
-        else
-            return false
-        end
-    else
-        return true
+-- função "fake" para neutralizar chamadas indesejadas
+local function blockEvent()
+    return function(...)
+        --print("Bloqueado:", ...)
     end
 end
 
--- Verifica se a parte inimiga está no centro da tela
-local function IsAtScreenCenter(screenPos)
-    return (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude <= centerTolerance
+-- ⚡ Neutraliza conexões que o anticheat cria
+for _, conn in pairs(getconnections(script:GetPropertyChangedSignal("Disabled"))) do
+    conn:Disable()
+end
+for _, conn in pairs(getconnections(script:GetPropertyChangedSignal("Parent"))) do
+    conn:Disable()
+end
+for _, conn in pairs(getconnections(script.AncestryChanged)) do
+    conn:Disable()
 end
 
-RunService.RenderStepped:Connect(function()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local targetPart = player.Character:FindFirstChild(aimPartName)
-            if targetPart and not player.Character:FindFirstChild("FakeVisualCabesa") then
-                local humanoid = player.Character:FindFirstChild("Humanoid")
-                if humanoid and humanoid.Health > 0 then
-                    local distance = (LocalPlayer.Character.HumanoidRootPart.Position - targetPart.Position).Magnitude
-                    if distance <= maxDistance then
-                        local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
-                        if onScreen and IsAtScreenCenter(screenPos) then
-                            if canSeeTarget(targetPart) then
-                                -- Atira nas novas posições definidas sem parar o movimento
-                                for _, pos in ipairs(FirePositions) do
-                                    VirtualUser:CaptureController()
-                                    VirtualUser:ClickButton1(Vector2.new(pos.X, pos.Y))
-                                end
-                            end
-                        end
-                    end
-                end
+-- ⚡ Neutraliza monitoramento de hitbox (Size / Mesh / Scale)
+local function safePart(part)
+    for _, conn in pairs(getconnections(part:GetPropertyChangedSignal("Size"))) do
+        conn:Disable()
+    end
+    local mesh = part:FindFirstChildOfClass("SpecialMesh")
+    if mesh then
+        for _, conn in pairs(getconnections(mesh:GetPropertyChangedSignal("Scale"))) do
+            conn:Disable()
+        end
+    end
+end
+
+local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+for _, v in pairs(char:GetDescendants()) do
+    if v:IsA("BasePart") or v:IsA("MeshPart") then
+        safePart(v)
+    end
+end
+
+-- ⚡ Neutraliza monitoramento de CanCollide (noclip)
+local function disableCanCollideChecks(model)
+    for _, v in pairs(model:GetDescendants()) do
+        if v:IsA("BasePart") then
+            for _, conn in pairs(getconnections(v:GetPropertyChangedSignal("CanCollide"))) do
+                conn:Disable()
             end
         end
     end
+end
+disableCanCollideChecks(char)
+
+LocalPlayer.CharacterAdded:Connect(function(newChar)
+    task.wait(3)
+    disableCanCollideChecks(newChar)
 end)
 
+print("[Bypass] Anticheat custom desativado (exceto Walk/Jump/Fly)")
 
-
-
+-- Segundo script: Aimbot
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
 
 -- Configurações
 local aimPartName = "Cabesa"
-local fovRadius = 800 -- pixels
-local smoothness = 0.5 -- Suavidade (0.5 é o que você achou melhor)
-local maxTurnSpeed = 100 -- Velocidade máxima de rotação (em graus por segundo)
+local fovRadius = 70 -- pixels
+local smoothness = 0.7 -- Suavidade
+local maxTurnSpeed = 60 -- Velocidade máxima de rotação
+local aimEnabled = true -- Controle para ativar/desativar aimbot
 
 local function canSeeTarget(targetPart)
     local origin = Workspace.CurrentCamera.CFrame.Position
-    local direction = (targetPart.Position - origin)
+    local direction = (targetPart.Position - origin).Unit * 1000
     local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character} -- Ignorar local player
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
 
-    local raycastResult = Workspace:Raycast(origin, direction, raycastParams)
-    if raycastResult then
-        if raycastResult.Instance:IsDescendantOf(targetPart.Parent) then
-            return true -- Chegou na parte do inimigo
-        else
-            return false
-        end
-    else
-        return true
-    end
+    local raycastResult = Workspace:Raycast(origin, direction, raycastParams)  
+    if raycastResult then  
+        return raycastResult.Instance:IsDescendantOf(targetPart.Parent)  
+    end  
+    return true
 end
 
 local function getClosestTarget()
@@ -104,46 +98,134 @@ local function getClosestTarget()
     local camera = Workspace.CurrentCamera
     local screenCenter = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
 
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(aimPartName) then
-            local humanoid = player.Character:FindFirstChild("Humanoid")
-            if humanoid and humanoid.Health > 0 then -- checar se vivo
-                local part = player.Character[aimPartName]
-                local pos, onScreen = camera:WorldToViewportPoint(part.Position)
-                if onScreen then
-                    local dist = (Vector2.new(pos.X, pos.Y) - screenCenter).Magnitude
-                    if dist <= fovRadius then
-                        if canSeeTarget(part) then
-                            if dist < closestDistance then
-                                closestDistance = dist
-                                closestPart = part
-                            end
-                        end
+    for _, player in pairs(Players:GetPlayers()) do  
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(aimPartName) then  
+            local humanoid = player.Character:FindFirstChild("Humanoid")  
+            if humanoid and humanoid.Health > 0 then  
+                local part = player.Character[aimPartName]  
+                local pos, onScreen = camera:WorldToViewportPoint(part.Position)  
+                if onScreen then  
+                    local dist = (Vector2.new(pos.X, pos.Y) - screenCenter).Magnitude  
+                    if dist <= fovRadius and canSeeTarget(part) then  
+                        if dist < closestDistance then  
+                            closestDistance = dist  
+                            closestPart = part  
+                        end  
                     end
-                end
-            end
-        end
-    end
+                end  
+            end  
+        end  
+    end  
     return closestPart
 end
 
-RunService.RenderStepped:Connect(function(deltaTime)
-    local targetPart = getClosestTarget()
-    if targetPart then
-        local camera = Workspace.CurrentCamera
-        local currentCFrame = camera.CFrame
-        local targetCFrame = CFrame.new(currentCFrame.Position, targetPart.Position)
-
-        -- Calcular a diferença angular
-        local currentDir = currentCFrame.LookVector
-        local targetDir = (targetPart.Position - currentCFrame.Position).Unit
-        local angle = math.acos(math.clamp(currentDir:Dot(targetDir), -1, 1))
-
-        -- Limitar a velocidade de rotação
-        local maxAngleThisFrame = math.rad(maxTurnSpeed) * deltaTime
-        local t = math.min(smoothness, maxAngleThisFrame / math.max(angle, 0.0001))
-
-        -- Interpolação suave
-        camera.CFrame = currentCFrame:Lerp(targetCFrame, t)
+UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        aimEnabled = true
     end
 end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        aimEnabled = false
+    end
+end)
+
+local lastTargetPos = nil
+RunService.RenderStepped:Connect(function(deltaTime)
+    if not aimEnabled then return end
+
+    local targetPart = getClosestTarget()  
+    local camera = Workspace.CurrentCamera  
+
+    if targetPart then  
+        local offset = Vector3.new(math.random(-0.2, 0.2), math.random(-0.2, 0.2), math.random(-0.2, 0.2))  
+        local targetPos = targetPart.Position + offset  
+
+        if lastTargetPos then  
+            targetPos = lastTargetPos:Lerp(targetPart.Position, 0.3)
+        end  
+        lastTargetPos = targetPos  
+
+        local currentCFrame = camera.CFrame  
+        local targetCFrame = CFrame.new(currentCFrame.Position, targetPos)  
+
+        local currentDir = currentCFrame.LookVector  
+        local targetDir = (targetPos - currentCFrame.Position).Unit  
+        local angle = math.acos(math.clamp(currentDir:Dot(targetDir), -1, 1))  
+
+        local maxAngleThisFrame = math.rad(maxTurnSpeed) * deltaTime  
+        local t = math.min(smoothness, maxAngleThisFrame / math.max(angle, 0.0001))  
+
+        camera.CFrame = currentCFrame:Lerp(targetCFrame, t)  
+    else  
+        lastTargetPos = nil
+    end
+end)
+
+-- Espera 6 segundos antes de executar o terceiro script
+task.wait(6)
+
+-- Terceiro script: Efeito de cabeça grande
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local currentSize = Vector3.new(2.0, 2.0, 2.0) -- tamanho final da Cabesa
+
+local function applyCabesa(char)
+    task.wait(0.1)
+    local cabesa = char:FindFirstChild("Cabesa")
+    if not cabesa or char == LocalPlayer.Character then return end
+    if char:FindFirstChild("FakeVisualCabesa") then return end
+
+    local fake = cabesa:Clone()
+    fake.Name = "FakeVisualCabesa"
+    fake.Size = Vector3.new(1, 1, 1)
+    fake.Transparency = 0
+    fake.CanCollide = false
+    fake.Anchored = false
+    fake.Massless = true
+    fake.Parent = char
+
+    cabesa.Size = currentSize
+    cabesa.Transparency = 1
+    cabesa.CanCollide = false
+    cabesa.Massless = true
+
+    local face = cabesa:FindFirstChildOfClass("Decal")
+    if face then
+        face.Transparency = 1
+    end
+
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = cabesa
+    weld.Part1 = fake
+    weld.Parent = cabesa
+
+    cabesa:GetPropertyChangedSignal("Size"):Connect(function()
+        if cabesa.Size ~= currentSize then
+            cabesa.Size = currentSize
+        end
+    end)
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+    local char = workspace:FindFirstChild(player.Name)
+    if char then
+        applyCabesa(char)
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(char)
+        task.wait(0.5)
+        applyCabesa(char)
+    end)
+end)
+
+for _, player in pairs(Players:GetPlayers()) do
+    player.CharacterAdded:Connect(function(char)
+        task.wait(0.5)
+        applyCabesa(char)
+    end)
+end
