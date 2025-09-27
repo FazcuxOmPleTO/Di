@@ -1,4 +1,4 @@
-local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage")) :: ReplicatedStorage; 
+local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage")) :: ReplicatedStorage;
 local TeleportService = cloneref(game:GetService("TeleportService")) :: TeleportService;
 local ScriptContext = cloneref(game:GetService("ScriptContext")) :: ScriptContext;
 local StarterPlayer = cloneref(game:GetService("StarterPlayer")) :: StarterPlayer;
@@ -131,7 +131,7 @@ local AdvancedBypassAPI, Connections = {}, {}; do
                 if Players.NumPlayers > 1 then
                 TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer);
                 else
-                TeleportService:Teleport(game.PlaceI, LocalPlayer);
+                TeleportService:Teleport(game.PlaceId, LocalPlayer);
             end;
         end);
         LocalPlayer:Kick("You just ascended -> rejoining...");
@@ -277,6 +277,103 @@ gameMeta.__namecall = newcclosure(function(self, ...)
 
     if BlockedKeys[method] and BlockedInstances[self.Name] and not checkcaller() then
         if method == "GetPropertyChangedSignal" or method == "AncestryChanged" then
+            return makeDummySignal();
+        elseif method == "WaitForChild" or method:match("^FindFirstChild") then
+            local args = { ... };
+            local childName = args[1];
+            if childName == self.Name then
+                return BlockedInstances[self.Name];
+            else
+                return nil;
+            end;
+        elseif method == "IsDescendantOf" then
+            return true;
+        else 
+            return nil;
+        end;
+    end;
+
+    return originalNamecall(self, ...);
+end);
+
+make_writeable(gameMeta, true);
+
+local AntiSend_Warn; AntiSend_Warn = hookfunction(warn, function(...)
+    if checkcaller() then
+        return;
+    end;
+    return AntiSend_Warn(...);
+end);
+    
+local AntiSend_Print; AntiSend_Print = hookfunction(print, function(...)
+    if checkcaller() then
+        return;
+    end;
+    return AntiSend_Print(...);
+end);
+    
+local AntiSend_Error; AntiSend_Error = hookfunction(error, function(...)
+    if checkcaller() then
+        return;
+    end;
+    return AntiSend_Error(...);
+end);
+
+task.wait(1);
+
+if ChatService then
+    ChatService.Disabled = true;
+end;
+
+if ChatService2 then
+    ChatService2.Disabled = true;
+end;
+
+task.defer(function()
+    wait(1) -- Espera o anti-cheat inicializar
+    
+    -- Varre todos os scripts do jogador
+    for _, script in ipairs(LocalPlayer.PlayerScripts:GetDescendants()) do
+        if script:IsA("LocalScript") then
+            pcall(function()
+                local env = getfenv(script)
+                
+                -- u9 = anti_hitbox, u8 = anti_headsize (conforme análise do código)
+                if DISABLE_ANTI_HITBOX and env.u9 ~= nil then
+                    env.u9 = false
+                    print("[BYPASS PÓS] Anti-Hitbox desativado")
+                end
+                
+                if DISABLE_ANTI_HEADSIZE and env.u8 ~= nil then
+                    env.u8 = false
+                    print("[BYPASS PÓS] Anti-Headsize desativado")
+                end
+            end)
+        end
+    end
+
+    -- Adiciona notificação no canto inferior direito
+    local StarterGui = game:GetService("StarterGui")
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Parent = LocalPlayer.PlayerGui
+    screenGui.IgnoreGuiInset = true
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(0, 200, 0, 50)
+    textLabel.Position = UDim2.new(1, -210, 1, -60) -- Canto inferior direito
+    textLabel.AnchorPoint = Vector2.new(1, 1)
+    textLabel.BackgroundTransparency = 0.5
+    textLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    textLabel.Text = "Pronto"
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.TextScaled = true
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.Parent = screenGui
+
+    -- Remove a notificação após 1 segundo
+    task.wait(1)
+    screenGui:Destroy()
+end) "GetPropertyChangedSignal" or method == "AncestryChanged" then
             return makeDummySignal();
         elseif method == "WaitForChild" or method:match("^FindFirstChild") then
             local args = { ... };
