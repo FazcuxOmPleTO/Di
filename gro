@@ -156,10 +156,10 @@ local UserInputService = game:GetService("UserInputService")
 
 -- Configurações
 local aimPartName = "Cabesa"
-local fovRadius = 50 -- pixels
+local fovRadius = 0 -- pixels
 local smoothness = 0.7 -- Suavidade
 local maxTurnSpeed = 60 -- Velocidade máxima de rotação
-local aimEnabled = true -- Controle para ativar/desativar aimbot
+local aimEnabled = false -- Controle para ativar/desativar aimbot
 
 local function canSeeTarget(targetPart)
     local origin = Workspace.CurrentCamera.CFrame.Position
