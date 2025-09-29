@@ -311,3 +311,25 @@ for _, player in pairs(Players:GetPlayers()) do
         applyCabesa(char)
     end)
 end
+
+
+
+local Status = loadstring(game:HttpGet("https://raw.githubusercontent.com/Hosvile/Refinement/main/Blox%20Fruit%20ESP",true))()
+
+function Status:Callback(v)
+	local Update = Status:Add(v)
+	Update(v.Character.Humanoid.MaxHealth,v.Character.Humanoid.Health,0,0)
+	v.Character.Humanoid:GetPropertyChangedSignal("Health"):Connect(function(val)
+		Update(v.Character.Humanoid.MaxHealth,v.Character.Humanoid.Health,0,0)
+	end)
+end
+
+--Status:Activate()
+
+Status:Activate().Completed:Connect(function()
+	task.wait(2.5)
+	Status:Deactivate().Completed:Connect(function()
+		task.wait(2.5)
+		Status:Activate()
+	end)
+end)
