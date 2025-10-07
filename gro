@@ -156,10 +156,10 @@ local UserInputService = game:GetService("UserInputService")
 
 -- Configurações
 local aimPartName = "Cabesa"
-local fovRadius = 0 -- pixels
-local smoothness = 0.7 -- Suavidade
-local maxTurnSpeed = 60 -- Velocidade máxima de rotação
-local aimEnabled = false -- Controle para ativar/desativar aimbot
+local fovRadius = 30 -- pixels
+local smoothness = 1 -- Suavidade
+local maxTurnSpeed = 30 -- Velocidade máxima de rotação
+local aimEnabled = true -- Controle para ativar/desativar aimbot
 
 local function canSeeTarget(targetPart)
     local origin = Workspace.CurrentCamera.CFrame.Position
@@ -252,7 +252,7 @@ task.wait(6)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local currentSize = Vector3.new(2.2, 2.2, 2.2) -- tamanho final da Cabesa
+local currentSize = Vector3.new(2, 2, 2) -- tamanho final da Cabesa
 
 local function applyCabesa(char)
     task.wait(0.1)
@@ -311,14 +311,3 @@ for _, player in pairs(Players:GetPlayers()) do
         applyCabesa(char)
     end)
 end
-
-
-
-
-for _, Item in pairs(game:GetService("CoreGui"):GetDescendants()) do
-	if Item:IsA("TextLabel") and Item.Text == "📆 Arceus X Origin"  then
-		Item.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent:Destroy()
-		break
-	end
-end
-
