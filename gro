@@ -158,7 +158,7 @@ local UserInputService = game:GetService("UserInputService")
 local aimPartName = "Cabesa"
 local fovRadius = 30 -- pixels
 local smoothness = 1 -- Suavidade
-local maxTurnSpeed = 240 -- Velocidade máxima de rotação
+local maxTurnSpeed = 30 -- Velocidade máxima de rotação
 local aimEnabled = true -- Controle para ativar/desativar aimbot
 
 local function canSeeTarget(targetPart)
