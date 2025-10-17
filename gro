@@ -1,101 +1,3 @@
--- AUTO-FIRE COMPATÍVEL COM CABESA 2.2
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
-local VirtualUser = game:GetService("VirtualUser")
-
--- CONFIGURAÇÕES
-local FirePositions = {
-    Vector2.new(-0.707, -832),
-    Vector2.new(-0.654, -246)
-}
-local centerTolerance = 20
-local maxDistance = 300 -- studs
-
--- Função para detectar partes com face (mesma do CABESA)
-local function hasFaceMarker(obj)
-    if not obj then return false end
-    if obj:FindFirstChild("face") then return true end
-    for _,c in ipairs(obj:GetChildren()) do
-        if c:IsA("Decal") or c:IsA("Texture") then
-            return true
-        end
-    end
-    return false
-end
-
--- Função de raycast para linha de visão
-local function canSeeTarget(targetPart)
-    if not targetPart or not targetPart.Parent then return false end
-    local origin = Camera.CFrame.Position
-    local direction = (targetPart.Position - origin)
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = { LocalPlayer.Character }
-    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-
-    local result = Workspace:Raycast(origin, direction, raycastParams)
-    if result then
-        return result.Instance:IsDescendantOf(targetPart.Parent)
-    end
-    return true
-end
-
--- Checa se o alvo está no centro da tela
-local function IsAtScreenCenter(screenPos)
-    local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-    return (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude <= centerTolerance
-end
-
--- Scaner principal baseado no CABESA 2.2
-RunService.RenderStepped:Connect(function()
-    if not LocalPlayer or not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        return
-    end
-
-    local hrpPos = LocalPlayer.Character.HumanoidRootPart.Position
-
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and hasFaceMarker(obj) then
-            -- sobe até encontrar o Model com Humanoid
-            local model = obj
-            while model and not model:IsA("Model") do
-                model = model.Parent
-            end
-
-            if model and model:FindFirstChildOfClass("Humanoid") then
-                local player = Players:GetPlayerFromCharacter(model)
-                if player and player ~= LocalPlayer then
-                    -- evita FakeVisualCabesa
-                    if obj.Name == "FakeVisualCabesa" then
-                        continue
-                    end
-
-                    local humanoid = model:FindFirstChildOfClass("Humanoid")
-                    if humanoid and humanoid.Health > 0 then
-                        local distance = (hrpPos - obj.Position).Magnitude
-                        if distance <= maxDistance then
-                            local screenPos, onScreen = Camera:WorldToViewportPoint(obj.Position)
-                            if onScreen and IsAtScreenCenter(screenPos) and canSeeTarget(obj) then
-                                -- atira nas posições fornecidas
-                                for _, pos in ipairs(FirePositions) do
-                                    VirtualUser:CaptureController()
-                                    VirtualUser:ClickButton1(Vector2.new(pos.X, pos.Y))
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-end)
-
-
-
--- 1
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -225,13 +127,21 @@ print("[Bypass] Anticheat custom desativado (exceto Walk/Jump)")
 
 -- 2
 
--- SCRIPT CABESA 2.2 LIMPO
+-- AUTO-FIRE LIMPO COMPATÍVEL COM CABESA 2.2
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
-local workspace = workspace
+local Camera = Workspace.CurrentCamera
+local VirtualUser = game:GetService("VirtualUser")
 
-local currentSize = Vector3.new(3.2,3.2,3.2)
-local SCAN_DELAY = 2.2 -- segundos entre varreduras completas do workspace
+-- CONFIGURAÇÕES
+local FirePositions = {
+    Vector2.new(-0.707, -832),
+    Vector2.new(-0.654, -246)
+}
+local centerTolerance = 30
+local maxDistance = 300 -- studs
 
 local function hasFaceMarker(obj)
     if not obj then return false end
@@ -244,72 +154,59 @@ local function hasFaceMarker(obj)
     return false
 end
 
-local function applyToPart(part, model)
-    if not part or not model then return end
-    if model == LocalPlayer.Character then return end
-    if model:FindFirstChild("FakeVisualCabesa") then return end
+local function canSeeTarget(targetPart)
+    if not targetPart or not targetPart.Parent then return false end
+    local origin = Camera.CFrame.Position
+    local direction = (targetPart.Position - origin)
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = { LocalPlayer.Character }
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
 
-    pcall(function()
-        local fake = part:Clone()
-        fake.Name = "FakeVisualCabesa"
-        fake.Size = Vector3.new(1,1,1)
-        fake.Transparency = 0
-        fake.CanCollide = false
-        fake.Anchored = false
-        fake.Massless = true
-        fake.Parent = model
-
-        if fake:IsA("BasePart") then
-            pcall(function() fake.CFrame = part.CFrame end)
-        end
-
-        if part:IsA("BasePart") then
-            pcall(function() part.Size = currentSize end)
-            pcall(function() part.Transparency = 1 end)
-            pcall(function() part.CanCollide = false end)
-            pcall(function() part.Massless = true end)
-        end
-
-        local f = part:FindFirstChild("face")
-        if f and f:IsA("Decal") then pcall(function() f.Transparency = 1 end) end
-        for _,c in ipairs(part:GetChildren()) do
-            if c:IsA("Decal") or c:IsA("Texture") then
-                pcall(function() c.Transparency = 1 end)
-            end
-        end
-
-        if fake:IsA("BasePart") and part:IsA("BasePart") then
-            pcall(function()
-                local weld = Instance.new("WeldConstraint")
-                weld.Part0 = fake
-                weld.Part1 = part
-                weld.Parent = fake
-            end)
-        end
-
-        if part:IsA("BasePart") then
-            part:GetPropertyChangedSignal("Size"):Connect(function()
-                if part and part.Size ~= currentSize then
-                    pcall(function() part.Size = currentSize end)
-                end
-            end)
-        end
-    end)
+    local result = Workspace:Raycast(origin, direction, raycastParams)
+    if result then
+        return result.Instance:IsDescendantOf(targetPart.Parent)
+    end
+    return true
 end
 
-spawn(function()
-    while true do
-        for _,obj in ipairs(workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and hasFaceMarker(obj) then
-                local model = obj
-                while model and not model:IsA("Model") do
-                    model = model.Parent
-                end
-                if model and model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") then
-                    applyToPart(obj, model)
+local function IsAtScreenCenter(screenPos)
+    local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    return (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude <= centerTolerance
+end
+
+RunService.RenderStepped:Connect(function()
+    if not LocalPlayer or not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        return
+    end
+
+    local hrpPos = LocalPlayer.Character.HumanoidRootPart.Position
+
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and hasFaceMarker(obj) then
+            local model = obj
+            while model and not model:IsA("Model") do
+                model = model.Parent
+            end
+            if model and model:FindFirstChildOfClass("Humanoid") then
+                local player = Players:GetPlayerFromCharacter(model)
+                if player and player ~= LocalPlayer then
+                    if obj.Name ~= "FakeVisualCabesa" then
+                        local humanoid = model:FindFirstChildOfClass("Humanoid")
+                        if humanoid and humanoid.Health > 0 then
+                            local distance = (hrpPos - obj.Position).Magnitude
+                            if distance <= maxDistance then
+                                local screenPos, onScreen = Camera:WorldToViewportPoint(obj.Position)
+                                if onScreen and IsAtScreenCenter(screenPos) and canSeeTarget(obj) then
+                                    for _, pos in ipairs(FirePositions) do
+                                        VirtualUser:CaptureController()
+                                        VirtualUser:ClickButton1(Vector2.new(pos.X, pos.Y))
+                                    end
+                                end
+                            end
+                        end
+                    end
                 end
             end
         end
-        task.wait(SCAN_DELAY)
     end
 end)
