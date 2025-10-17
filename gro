@@ -1,80 +1,78 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Waza80/scripts-new/refs/heads/main/AXRemove.lua"))()
+ositiongame:HttpGet("https://raw.githubusercontent.com/Waza80/scripts-new/refs/heads/main/AXRemove.lua"))()
 
 
 
 
---[[
-  RUNORDER: 1) Bypass/Neutralize (imediato)
-            2) Após 6 segundos -> CABESA 2.2 (limpo) + AUTO-FIRE compatível (limpo)
---]]
+-- Combined: Bypass first -> after 6s start Cabesa 2.2 + Auto-Fire
+-- Sem prints/logs (mínimo impacto no console). Use em executor cliente.
 
--- ========== BYPASS / ANTICHEAT NEUTRALIZER (executa primeiro) ==========
+-- ====== HELPERS ======
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local function safeGetConnections(signal)
+    local ok, res = pcall(function() return getconnections(signal) end)
+    if ok and type(res) == "table" then
+        return res
+    end
+    return {}
+end
+
+local function safeDisableConnections(conns)
+    for _, c in ipairs(conns) do
+        pcall(function() if c and c.Disable then c:Disable() end end)
+    end
+end
+
+-- ====== BYPASS / ANTICHEAT (EXECUTA IMEDIATO) ======
 do
-    local Players = game:GetService("Players")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-    local LocalPlayer = Players.LocalPlayer
-
-    -- Pega o remote ExploitBan (espera caso ainda não exista)
-    local remotes = ReplicatedStorage:WaitForChild("Remotes")
-    local ExploitBan = remotes:FindFirstChild("ExploitBan")
-    if ExploitBan then
-        -- Hook no FireServer para bloquear bans
-        local function blockEvent()
-            return function(...) end
-        end
-        -- Tentativa direta (alguns executores permitem)
-        pcall(function() ExploitBan.FireServer = blockEvent() end)
-        -- Se for RemoteEvent (FireServer é método), também tentamos substituir metatable (fallback silencioso)
-        pcall(function()
-            if type(ExploitBan.FireServer) == "function" then
-                ExploitBan.FireServer = blockEvent()
-            end
-        end)
-    end
-
-    -- Hook no EndKillCam
-    local successZ, ZexisShared = pcall(function() return ReplicatedStorage:WaitForChild("ZexisShared") end)
-    if successZ and ZexisShared then
-        pcall(function()
-            local ok, ZexisCamera = pcall(function() return require(ZexisShared.Modules.ZexisCamera) end)
-            if ok and type(ZexisCamera) == "table" then
-                pcall(function() ZexisCamera.EndKillCam = function() end end)
-            end
-        end)
-    end
-
-    -- Desabilita connections de propriedades do próprio script (defensivo)
+    -- ExploitBan remote (silencioso)
     pcall(function()
-        if script and script:GetPropertyChangedSignal then
-            for _, conn in pairs(getconnections(script:GetPropertyChangedSignal("Disabled")) or {}) do
-                pcall(function() conn:Disable() end)
-            end
-            for _, conn in pairs(getconnections(script:GetPropertyChangedSignal("Parent")) or {}) do
-                pcall(function() conn:Disable() end)
-            end
-            for _, conn in pairs(getconnections(script.AncestryChanged) or {}) do
-                pcall(function() conn:Disable() end)
+        local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+        if remotes then
+            local ExploitBan = remotes:FindFirstChild("ExploitBan")
+            if ExploitBan then
+                -- tenta neutralizar FireServer de forma segura
+                pcall(function()
+                    ExploitBan.FireServer = (function() return function() end end)()
+                end)
             end
         end
     end)
 
-    -- Animate (se existir) - disable signals
+    -- tenta neutralizar ZexisCamera.EndKillCam se existir
+    pcall(function()
+        local ZexisShared = ReplicatedStorage:FindFirstChild("ZexisShared")
+        if ZexisShared and ZexisShared:FindFirstChild("Modules") then
+            local ok, required = pcall(function()
+                return require(ZexisShared.Modules.ZexisCamera)
+            end)
+            if ok and type(required) == "table" then
+                pcall(function() required.EndKillCam = function() end end)
+            end
+        end
+    end)
+
+    -- desabilita conexões do próprio script (defensivo)
+    pcall(function()
+        safeDisableConnections(safeGetConnections(script:GetPropertyChangedSignal("Disabled")))
+        safeDisableConnections(safeGetConnections(script:GetPropertyChangedSignal("Parent")))
+        safeDisableConnections(safeGetConnections(script.AncestryChanged))
+    end)
+
+    -- animate (se existir) - safe disable
     pcall(function()
         local animate = script.Parent and script.Parent:FindFirstChild("Animate")
         if animate then
-            for _, conn in pairs(getconnections(animate:GetPropertyChangedSignal("Disabled")) or {}) do
-                pcall(function() conn:Disable() end)
-            end
-            for _, conn in pairs(getconnections(animate:GetPropertyChangedSignal("Parent")) or {}) do
-                pcall(function() conn:Disable() end)
-            end
-            for _, conn in pairs(getconnections(animate.AncestryChanged) or {}) do
-                pcall(function() conn:Disable() end)
-            end
+            safeDisableConnections(safeGetConnections(animate:GetPropertyChangedSignal("Disabled")))
+            safeDisableConnections(safeGetConnections(animate:GetPropertyChangedSignal("Parent")))
+            safeDisableConnections(safeGetConnections(animate.AncestryChanged))
         end
     end)
 
-    -- Espera personagem de forma segura
+    -- espera char seguro
     local function waitForCharacter()
         local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
         char:WaitForChild("Humanoid")
@@ -82,76 +80,53 @@ do
         return char
     end
 
-    local char = waitForCharacter()
-    local humanoid = char:WaitForChild("Humanoid")
-    local hrp = char:WaitForChild("HumanoidRootPart")
+    local okChar, char = pcall(waitForCharacter)
+    if not okChar or not char then
+        -- não pode prosseguir com disables se não houver character
+        char = LocalPlayer.Character
+    end
 
-    -- Neutraliza monitoramento de humanoid local
-    pcall(function()
-        for _, conn in pairs(getconnections(humanoid:GetPropertyChangedSignal("WalkSpeed")) or {}) do pcall(function() conn:Disable() end) end
-        for _, conn in pairs(getconnections(humanoid:GetPropertyChangedSignal("JumpPower")) or {}) do pcall(function() conn:Disable() end) end
-        for _, conn in pairs(getconnections(humanoid:GetPropertyChangedSignal("PlatformStand")) or {}) do pcall(function() conn:Disable() end) end
-    end)
-
-    -- Neutraliza monitoramento do HRP local
-    pcall(function()
-        for _, conn in pairs(getconnections(hrp:GetPropertyChangedSignal("Size")) or {}) do pcall(function() conn:Disable() end) end
-        for _, conn in pairs(getconnections(hrp:GetPropertyChangedSignal("CanCollide")) or {}) do pcall(function() conn:Disable() end) end
-        for _, conn in pairs(getconnections(hrp.ChildAdded) or {}) do pcall(function() conn:Disable() end) end
-    end)
-
-    -- Remove Highlights / BoxHandleAdornment adicionados ao character
-    pcall(function()
-        char.DescendantAdded:Connect(function(child)
-            if child and (child:IsA("Highlight") or child:IsA("BoxHandleAdornment")) then
-                task.defer(function() pcall(function() child:Destroy() end) end)
-            end
-        end)
-    end)
-
-    -- Quando personagem reaparecer, reaplicar disables
-    Players.LocalPlayer.CharacterAdded:Connect(function(newChar)
-        task.wait(3)
-        local newHum = newChar:WaitForChild("Humanoid")
-        local newHrp = newChar:WaitForChild("HumanoidRootPart")
+    if char then
         pcall(function()
-            for _, conn in pairs(getconnections(newHum:GetPropertyChangedSignal("WalkSpeed")) or {}) do pcall(function() conn:Disable() end) end
-            for _, conn in pairs(getconnections(newHum:GetPropertyChangedSignal("JumpPower")) or {}) do pcall(function() conn:Disable() end) end
-            for _, conn in pairs(getconnections(newHum:GetPropertyChangedSignal("PlatformStand")) or {}) do pcall(function() conn:Disable() end) end
-
-            for _, conn in pairs(getconnections(newHrp:GetPropertyChangedSignal("Size")) or {}) do pcall(function() conn:Disable() end) end
-            for _, conn in pairs(getconnections(newHrp:GetPropertyChangedSignal("CanCollide")) or {}) do pcall(function() conn:Disable() end) end
-            for _, conn in pairs(getconnections(newHrp.ChildAdded) or {}) do pcall(function() conn:Disable() end) end
-        end)
-        newChar.DescendantAdded:Connect(function(child)
-            if child and (child:IsA("Highlight") or child:IsA("BoxHandleAdornment")) then
-                task.defer(function() pcall(function() child:Destroy() end) end)
+            local humanoid = char:FindFirstChild("Humanoid")
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if humanoid then
+                safeDisableConnections(safeGetConnections(humanoid:GetPropertyChangedSignal("WalkSpeed")))
+                safeDisableConnections(safeGetConnections(humanoid:GetPropertyChangedSignal("JumpPower")))
+                safeDisableConnections(safeGetConnections(humanoid:GetPropertyChangedSignal("PlatformStand")))
+            end
+            if hrp then
+                safeDisableConnections(safeGetConnections(hrp:GetPropertyChangedSignal("Size")))
+                safeDisableConnections(safeGetConnections(hrp:GetPropertyChangedSignal("CanCollide")))
+                safeDisableConnections(safeGetConnections(hrp.ChildAdded))
             end
         end)
-    end)
 
-    -- Disable monitoring on other players (hitbox/ESP)
-    local function disablePlayerMonitoring(player)
-        if player.Character then
-            local pchar = player.Character
-            local phrp = pchar:FindFirstChild("HumanoidRootPart")
-            if phrp then
-                for _, conn in pairs(getconnections(phrp:GetPropertyChangedSignal("Size")) or {}) do pcall(function() conn:Disable() end) end
-            end
-            local highlight = pchar:FindFirstChildOfClass("Highlight") or pchar:FindFirstChildOfClass("BoxHandleAdornment")
-            if highlight then pcall(function() highlight:Destroy() end) end
-
-            pchar.DescendantAdded:Connect(function(child)
+        -- remove highlights/box adornments adicionados localmente
+        pcall(function()
+            char.DescendantAdded:Connect(function(child)
                 if child and (child:IsA("Highlight") or child:IsA("BoxHandleAdornment")) then
                     task.defer(function() pcall(function() child:Destroy() end) end)
                 end
             end)
-        end
-        player.CharacterAdded:Connect(function(newChar)
-            task.wait(1)
+        end)
+    end
+
+    -- reaplica disables em CharacterAdded
+    Players.LocalPlayer.CharacterAdded:Connect(function(newChar)
+        task.wait(3)
+        pcall(function()
+            local newHum = newChar:FindFirstChild("Humanoid")
             local newHrp = newChar:FindFirstChild("HumanoidRootPart")
+            if newHum then
+                safeDisableConnections(safeGetConnections(newHum:GetPropertyChangedSignal("WalkSpeed")))
+                safeDisableConnections(safeGetConnections(newHum:GetPropertyChangedSignal("JumpPower")))
+                safeDisableConnections(safeGetConnections(newHum:GetPropertyChangedSignal("PlatformStand")))
+            end
             if newHrp then
-                for _, conn in pairs(getconnections(newHrp:GetPropertyChangedSignal("Size")) or {}) do pcall(function() conn:Disable() end) end
+                safeDisableConnections(safeGetConnections(newHrp:GetPropertyChangedSignal("Size")))
+                safeDisableConnections(safeGetConnections(newHrp:GetPropertyChangedSignal("CanCollide")))
+                safeDisableConnections(safeGetConnections(newHrp.ChildAdded))
             end
             newChar.DescendantAdded:Connect(function(child)
                 if child and (child:IsA("Highlight") or child:IsA("BoxHandleAdornment")) then
@@ -159,199 +134,230 @@ do
                 end
             end)
         end)
-    end
+    end)
 
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then disablePlayerMonitoring(player) end
-    end
-    Players.PlayerAdded:Connect(function(player) if player ~= LocalPlayer then disablePlayerMonitoring(player) end end)
-
-    -- Disable CanCollide watches in current char and future chars
-    local function disableCanCollideChecks(model)
-        for _, v in pairs(model:GetDescendants()) do
-            if v:IsA("BasePart") then
-                for _, conn in pairs(getconnections(v:GetPropertyChangedSignal("CanCollide")) or {}) do pcall(function() conn:Disable() end) end
-            end
-        end
-    end
-    pcall(function() disableCanCollideChecks(char) end)
-    Players.LocalPlayer.CharacterAdded:Connect(function(newChar) task.wait(3); pcall(function() disableCanCollideChecks(newChar) end) end)
-
-    -- Mensagem única (mantive a print que estava no script original)
-    pcall(function() print("[Bypass] Anticheat avançado desativado (incluindo Walk/Jump/Fly/Noclip/ESP)") end)
-end
-
--- ========== AGUARDA 6 SEGUNDOS ANTES DE INICIAR OS OUTROS SCRIPTS ==========
-task.delay(6, function()
-    -- Use pcall para evitar que um erro pare toda a execução
-    pcall(function()
-        -- ========== CABESA 2.2 LIMPO ==========
-        do
-            local Players = game:GetService("Players")
-            local LocalPlayer = Players.LocalPlayer
-            local Workspace = workspace
-
-            local currentSize = Vector3.new(2.2,2.2,2.2)
-            local SCAN_DELAY = 2.2 -- segundos entre varreduras completas do workspace
-
-            local function hasFaceMarker(obj)
-                if not obj then return false end
-                if obj:FindFirstChild("face") then return true end
-                for _,c in ipairs(obj:GetChildren()) do
-                    if c:IsA("Decal") or c:IsA("Texture") then
-                        return true
-                    end
+    -- monitoring de outros players (hitbox/ESP)
+    local function disablePlayerMonitoring(player)
+        pcall(function()
+            if player.Character then
+                local pchar = player.Character
+                local phrp = pchar:FindFirstChild("HumanoidRootPart")
+                if phrp then
+                    safeDisableConnections(safeGetConnections(phrp:GetPropertyChangedSignal("Size")))
                 end
-                return false
-            end
-
-            local function applyToPart(part, model)
-                if not part or not model then return end
-                if model == LocalPlayer.Character then return end
-                if model:FindFirstChild("FakeVisualCabesa") then return end
-
-                pcall(function()
-                    local fake = part:Clone()
-                    fake.Name = "FakeVisualCabesa"
-                    fake.Size = Vector3.new(1,1,1)
-                    fake.Transparency = 0
-                    fake.CanCollide = false
-                    fake.Anchored = false
-                    fake.Massless = true
-                    fake.Parent = model
-
-                    if fake:IsA("BasePart") then
-                        pcall(function() fake.CFrame = part.CFrame end)
-                    end
-
-                    if part:IsA("BasePart") then
-                        pcall(function() part.Size = currentSize end)
-                        pcall(function() part.Transparency = 1 end)
-                        pcall(function() part.CanCollide = false end)
-                        pcall(function() part.Massless = true end)
-                    end
-
-                    local f = part:FindFirstChild("face")
-                    if f and f:IsA("Decal") then pcall(function() f.Transparency = 1 end) end
-                    for _,c in ipairs(part:GetChildren()) do
-                        if c:IsA("Decal") or c:IsA("Texture") then
-                            pcall(function() c.Transparency = 1 end)
-                        end
-                    end
-
-                    if fake:IsA("BasePart") and part:IsA("BasePart") then
-                        pcall(function()
-                            local weld = Instance.new("WeldConstraint")
-                            weld.Part0 = fake
-                            weld.Part1 = part
-                            weld.Parent = fake
-                        end)
-                    end
-
-                    if part:IsA("BasePart") then
-                        part:GetPropertyChangedSignal("Size"):Connect(function()
-                            if part and part.Size ~= currentSize then
-                                pcall(function() part.Size = currentSize end)
-                            end
-                        end)
+                local highlight = pchar:FindFirstChildOfClass("Highlight") or pchar:FindFirstChildOfClass("BoxHandleAdornment")
+                if highlight then pcall(function() highlight:Destroy() end) end
+                pchar.DescendantAdded:Connect(function(child)
+                    if child and (child:IsA("Highlight") or child:IsA("BoxHandleAdornment")) then
+                        task.defer(function() pcall(function() child:Destroy() end) end)
                     end
                 end)
             end
 
-            -- Scanner principal rodando em loop (spawned thread)
-            spawn(function()
-                while true do
-                    for _,obj in ipairs(Workspace:GetDescendants()) do
-                        if obj:IsA("BasePart") and hasFaceMarker(obj) then
-                            local model = obj
-                            while model and not model:IsA("Model") do
-                                model = model.Parent
-                            end
-                            if model and model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") then
-                                applyToPart(obj, model)
-                            end
-                        end
+            player.CharacterAdded:Connect(function(newChar)
+                task.wait(1)
+                local newHrp = newChar:FindFirstChild("HumanoidRootPart")
+                if newHrp then
+                    safeDisableConnections(safeGetConnections(newHrp:GetPropertyChangedSignal("Size")))
+                end
+                newChar.DescendantAdded:Connect(function(child)
+                    if child and (child:IsA("Highlight") or child:IsA("BoxHandleAdornment")) then
+                        task.defer(function() pcall(function() child:Destroy() end) end)
                     end
-                    task.wait(SCAN_DELAY)
+                end)
+            end)
+        end)
+    end
+
+    for _, pl in pairs(Players:GetPlayers()) do
+        if pl ~= LocalPlayer then pcall(function() disablePlayerMonitoring(pl) end) end
+    end
+    Players.PlayerAdded:Connect(function(pl) if pl ~= LocalPlayer then pcall(function() disablePlayerMonitoring(pl) end) end)
+    
+    -- disable CanCollide checks em todas parts do char atual (e futuros)
+    local function disableCanCollideChecks(model)
+        pcall(function()
+            for _, v in pairs(model:GetDescendants()) do
+                if v and v:IsA and v:IsA("BasePart") then
+                    safeDisableConnections(safeGetConnections(v:GetPropertyChangedSignal("CanCollide")))
+                end
+            end
+        end)
+    end
+    if char then pcall(function() disableCanCollideChecks(char) end) end
+    Players.LocalPlayer.CharacterAdded:Connect(function(newChar) task.wait(3); pcall(function() disableCanCollideChecks(newChar) end) end)
+end -- fim bypass do-block
+
+-- ====== AGUARDA 6 SEGUNDOS E INICIA CABESA + AUTO-FIRE ======
+task.spawn(function()
+    task.wait(6) -- espera 6s
+
+    -- ---------- CABESA 2.2 (limpo) ----------
+    do
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        local Workspace = workspace
+
+        local currentSize = Vector3.new(2.2,2.2,2.2)
+        local SCAN_DELAY = 2.2
+
+        local function hasFaceMarker(obj)
+            if not obj then return false end
+            if obj:FindFirstChild("face") then return true end
+            for _,c in ipairs(obj:GetChildren()) do
+                if c:IsA("Decal") or c:IsA("Texture") then
+                    return true
+                end
+            end
+            return false
+        end
+
+        local function applyToPart(part, model)
+            if not part or not model then return end
+            if model == LocalPlayer.Character then return end
+            if model:FindFirstChild("FakeVisualCabesa") then return end
+
+            pcall(function()
+                local fake = part:Clone()
+                fake.Name = "FakeVisualCabesa"
+                fake.Size = Vector3.new(1,1,1)
+                fake.Transparency = 0
+                fake.CanCollide = false
+                fake.Anchored = false
+                fake.Massless = true
+                fake.Parent = model
+
+                if fake:IsA("BasePart") then
+                    pcall(function() fake.CFrame = part.CFrame end)
+                end
+
+                if part:IsA("BasePart") then
+                    pcall(function() part.Size = currentSize end)
+                    pcall(function() part.Transparency = 1 end)
+                    pcall(function() part.CanCollide = false end)
+                    pcall(function() part.Massless = true end)
+                end
+
+                local f = part:FindFirstChild("face")
+                if f and f:IsA("Decal") then pcall(function() f.Transparency = 1 end) end
+                for _,c in ipairs(part:GetChildren()) do
+                    if c:IsA("Decal") or c:IsA("Texture") then
+                        pcall(function() c.Transparency = 1 end)
+                    end
+                end
+
+                if fake:IsA("BasePart") and part:IsA("BasePart") then
+                    pcall(function()
+                        local weld = Instance.new("WeldConstraint")
+                        weld.Part0 = fake
+                        weld.Part1 = part
+                        weld.Parent = fake
+                    end)
+                end
+
+                if part:IsA("BasePart") then
+                    part:GetPropertyChangedSignal("Size"):Connect(function()
+                        if part and part.Size ~= currentSize then
+                            pcall(function() part.Size = currentSize end)
+                        end
+                    end)
                 end
             end)
         end
 
-        -- ========== AUTO-FIRE LIMPO COMPATÍVEL COM CABESA 2.2 ==========
-        do
-            local Players = game:GetService("Players")
-            local RunService = game:GetService("RunService")
-            local Workspace = game:GetService("Workspace")
-            local LocalPlayer = Players.LocalPlayer
-            local Camera = Workspace.CurrentCamera
-            local VirtualUser = game:GetService("VirtualUser")
-
-            -- CONFIGURAÇÕES
-            local FirePositions = {
-                Vector2.new(-0.707, -832),
-                Vector2.new(-0.654, -246)
-            }
-            local centerTolerance = 30
-            local maxDistance = 300 -- studs
-
-            local function hasFaceMarker(obj)
-                if not obj then return false end
-                if obj:FindFirstChild("face") then return true end
-                for _,c in ipairs(obj:GetChildren()) do
-                    if c:IsA("Decal") or c:IsA("Texture") then
-                        return true
-                    end
-                end
-                return false
-            end
-
-            local function canSeeTarget(targetPart)
-                if not targetPart or not targetPart.Parent then return false end
-                local origin = Camera.CFrame.Position
-                local direction = (targetPart.Position - origin)
-                local raycastParams = RaycastParams.new()
-                raycastParams.FilterDescendantsInstances = { LocalPlayer.Character }
-                raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-
-                local result = Workspace:Raycast(origin, direction, raycastParams)
-                if result then
-                    return result.Instance:IsDescendantOf(targetPart.Parent)
-                end
-                return true
-            end
-
-            local function IsAtScreenCenter(screenPos)
-                local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-                return (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude <= centerTolerance
-            end
-
-            RunService.RenderStepped:Connect(function()
-                if not LocalPlayer or not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    return
-                end
-
-                local hrpPos = LocalPlayer.Character.HumanoidRootPart.Position
-
+        spawn(function()
+            while true do
                 for _, obj in ipairs(Workspace:GetDescendants()) do
-                    if obj:IsA("BasePart") and hasFaceMarker(obj) then
+                    if obj and obj:IsA and obj:IsA("BasePart") and hasFaceMarker(obj) then
                         local model = obj
                         while model and not model:IsA("Model") do
                             model = model.Parent
                         end
-                        if model and model:FindFirstChildOfClass("Humanoid") then
-                            local player = Players:GetPlayerFromCharacter(model)
-                            if player and player ~= LocalPlayer then
-                                if obj.Name ~= "FakeVisualCabesa" then
-                                    local humanoid = model:FindFirstChildOfClass("Humanoid")
-                                    if humanoid and humanoid.Health > 0 then
-                                        local distance = (hrpPos - obj.Position).Magnitude
-                                        if distance <= maxDistance then
-                                            local screenPos, onScreen = Camera:WorldToViewportPoint(obj.Position)
-                                            if onScreen and IsAtScreenCenter(screenPos) and canSeeTarget(obj) then
-                                                for _, pos in ipairs(FirePositions) do
+                        if model and model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") then
+                            pcall(function() applyToPart(obj, model) end)
+                        end
+                    end
+                end
+                task.wait(SCAN_DELAY)
+            end
+        end)
+    end
+
+    -- ---------- AUTO-FIRE compatível com CABESA 2.2 (limpo) ----------
+    do
+        local Players = game:GetService("Players")
+        local RunService = game:GetService("RunService")
+        local Workspace = game:GetService("Workspace")
+        local LocalPlayer = Players.LocalPlayer
+        local Camera = Workspace.CurrentCamera
+        local VirtualUser = game:GetService("VirtualUser")
+
+        local FirePositions = {
+            Vector2.new(-0.707, -832),
+            Vector2.new(-0.654, -246)
+        }
+        local centerTolerance = 30
+        local maxDistance = 300
+
+        local function hasFaceMarker(obj)
+            if not obj then return false end
+            if obj:FindFirstChild("face") then return true end
+            for _,c in ipairs(obj:GetChildren()) do
+                if c:IsA("Decal") or c:IsA("Texture") then
+                    return true
+                end
+            end
+            return false
+        end
+
+        local function canSeeTarget(targetPart)
+            if not targetPart or not targetPart.Parent then return false end
+            local origin = Camera.CFrame.Position
+            local direction = (targetPart.Position - origin)
+            local raycastParams = RaycastParams.new()
+            raycastParams.FilterDescendantsInstances = { LocalPlayer.Character }
+            raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+            local result = Workspace:Raycast(origin, direction, raycastParams)
+            if result then
+                return result.Instance:IsDescendantOf(targetPart.Parent)
+            end
+            return true
+        end
+
+        local function IsAtScreenCenter(screenPos)
+            local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+            return (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude <= centerTolerance
+        end
+
+        RunService.RenderStepped:Connect(function()
+            if not LocalPlayer or not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                return
+            end
+
+            local hrpPos = LocalPlayer.Character.HumanoidRootPart.Position
+
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj and obj:IsA and obj:IsA("BasePart") and hasFaceMarker(obj) then
+                    local model = obj
+                    while model and not model:IsA("Model") do
+                        model = model.Parent
+                    end
+                    if model and model:FindFirstChildOfClass("Humanoid") then
+                        local player = Players:GetPlayerFromCharacter(model)
+                        if player and player ~= LocalPlayer then
+                            if obj.Name ~= "FakeVisualCabesa" then
+                                local humanoid = model:FindFirstChildOfClass("Humanoid")
+                                if humanoid and humanoid.Health > 0 then
+                                    local distance = (hrpPos - obj.Position).Magnitude
+                                    if distance <= maxDistance then
+                                        local screenPos, onScreen = Camera:WorldToViewportPoint(obj.Position)
+                                        if onScreen and IsAtScreenCenter(screenPos) and canSeeTarget(obj) then
+                                            for _, pos in ipairs(FirePositions) do
+                                                pcall(function()
                                                     VirtualUser:CaptureController()
                                                     VirtualUser:ClickButton1(Vector2.new(pos.X, pos.Y))
-                                                end
+                                                end)
                                             end
                                         end
                                     end
@@ -360,7 +366,7 @@ task.delay(6, function()
                         end
                     end
                 end
-            end)
-        end
-    end)
+            end
+        end)
+    end
 end)
