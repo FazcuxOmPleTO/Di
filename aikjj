@@ -1,1 +1,360 @@
-deixa para a próxima 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- pega o remote ExploitBan
+local ExploitBan = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ExploitBan")
+
+-- função "fake" para neutralizar chamadas indesejadas
+local function blockEvent()
+    return function(...)
+        --print("Bloqueado:", ...)
+    end
+end
+
+-- ⚡ Neutraliza conexões que o anticheat cria
+for _, conn in pairs(getconnections(script:GetPropertyChangedSignal("Disabled"))) do
+    conn:Disable()
+end
+for _, conn in pairs(getconnections(script:GetPropertyChangedSignal("Parent"))) do
+    conn:Disable()
+end
+for _, conn in pairs(getconnections(script.AncestryChanged)) do
+    conn:Disable()
+end
+
+-- ⚡ Neutraliza monitoramento de hitbox (Size no HRP)
+local function safeHRP(part)
+    for _, conn in pairs(getconnections(part:GetPropertyChangedSignal("Size"))) do
+        conn:Disable()
+    end
+end
+
+-- ⚡ Neutraliza monitoramento de CanCollide (noclip no HRP)
+local function disableCanCollideChecks(hrp)
+    for _, conn in pairs(getconnections(hrp:GetPropertyChangedSignal("CanCollide"))) do
+        conn:Disable()
+    end
+end
+
+-- ⚡ Neutraliza monitoramento de ChildAdded no HRP (fly/noclip/btools)
+local function disableChildAddedChecks(hrp)
+    for _, conn in pairs(getconnections(hrp.ChildAdded)) do
+        conn:Disable()
+    end
+end
+
+-- ⚡ Neutraliza monitoramento de PlatformStand no Humanoid (para fly)
+local function disableHumanoidChecks(humanoid)
+    for _, prop in ipairs({"PlatformStand"}) do
+        for _, conn in pairs(getconnections(humanoid:GetPropertyChangedSignal(prop))) do
+            conn:Disable()
+        end
+    end
+end
+
+-- ⚡ Neutraliza monitoramento no Animate (Disabled/Parent/Ancestry)
+local function disableAnimateChecks(animate)
+    for _, conn in pairs(getconnections(animate:GetPropertyChangedSignal("Disabled"))) do
+        conn:Disable()
+    end
+    for _, conn in pairs(getconnections(animate:GetPropertyChangedSignal("Parent"))) do
+        conn:Disable()
+    end
+    for _, conn in pairs(getconnections(animate.AncestryChanged)) do
+        conn:Disable()
+    end
+end
+
+-- Aplica no personagem local
+local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local humanoid = char:WaitForChild("Humanoid")
+local animate = char:FindFirstChild("Animate")
+
+safeHRP(hrp)
+disableCanCollideChecks(hrp)
+disableChildAddedChecks(hrp)
+disableHumanoidChecks(humanoid)
+if animate then
+    disableAnimateChecks(animate)
+end
+
+-- Aplica em personagens de outros jogadores (para hitbox)
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer and player.Character then
+        local otherHrp = player.Character:FindFirstChild("HumanoidRootPart")
+        if otherHrp then
+            safeHRP(otherHrp)
+        end
+    end
+end
+
+-- Monitora novos personagens locais
+LocalPlayer.CharacterAdded:Connect(function(newChar)
+    task.wait(3)
+    local newHrp = newChar:WaitForChild("HumanoidRootPart")
+    local newHumanoid = newChar:WaitForChild("Humanoid")
+    local newAnimate = newChar:FindFirstChild("Animate")
+    
+    safeHRP(newHrp)
+    disableCanCollideChecks(newHrp)
+    disableChildAddedChecks(newHrp)
+    disableHumanoidChecks(newHumanoid)
+    if newAnimate then
+        disableAnimateChecks(newAnimate)
+    end
+end)
+
+-- Monitora novos jogadores e seus personagens (para hitbox)
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LocalPlayer then
+        player.CharacterAdded:Connect(function(newChar)
+            task.wait(3)
+            local newHrp = newChar:FindFirstChild("HumanoidRootPart")
+            if newHrp then
+                safeHRP(newHrp)
+            end
+        end)
+    end
+end)
+
+print("[Bypass] Anticheat custom desativado (exceto Walk/Jump)")
+
+
+
+
+
+-- 2
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local currentSize = Vector3.new(2, 2, 2)
+
+-- Função auxiliar para detectar se um objeto tem face/decals
+local function hasFaceMarker(obj)
+	if not obj then return false end
+	if obj:FindFirstChild("face") then return true end
+	for _, c in ipairs(obj:GetChildren()) do
+		if c:IsA("Decal") or c:IsA("Texture") then
+			return true
+		end
+	end
+	return false
+end
+
+-- Aplica a modificação à cabeça do jogador
+local function applyToPart(part, model)
+	if not part or not model then return end
+	if model == LocalPlayer.Character then return end
+	if model:FindFirstChild("FakeVisualCabesa") then return end
+
+	pcall(function()
+		local fake = part:Clone()
+		fake.Name = "FakeVisualCabesa"
+		fake.Size = Vector3.new(1, 1, 1)
+		fake.Transparency = 0
+		fake.CanCollide = false
+		fake.Anchored = false
+		fake.Massless = true
+		fake.Parent = model
+
+		fake.CFrame = part.CFrame
+
+		-- esconder cabeça original
+		part.Size = currentSize
+		part.Transparency = 1
+		part.CanCollide = false
+		part.Massless = true
+
+		local face = part:FindFirstChild("face")
+		if face and face:IsA("Decal") then face.Transparency = 1 end
+		for _, c in ipairs(part:GetChildren()) do
+			if c:IsA("Decal") or c:IsA("Texture") then
+				c.Transparency = 1
+			end
+		end
+
+		-- weld simples
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = fake
+		weld.Part1 = part
+		weld.Parent = fake
+
+		part:GetPropertyChangedSignal("Size"):Connect(function()
+			if part.Size ~= currentSize then
+				part.Size = currentSize
+			end
+		end)
+	end)
+end
+
+-- Função para processar um personagem recém-criado
+local function processCharacter(char)
+	if not char then return end
+	task.wait(0.5)
+	for _, obj in ipairs(char:GetDescendants()) do
+		if obj:IsA("BasePart") and hasFaceMarker(obj) then
+			local model = obj:FindFirstAncestorOfClass("Model")
+			if model and model:FindFirstChildOfClass("Humanoid") then
+				applyToPart(obj, model)
+			end
+		end
+	end
+end
+
+-- Monitora todos os jogadores (sem scan pesado)
+for _, plr in ipairs(Players:GetPlayers()) do
+	if plr ~= LocalPlayer then
+		if plr.Character then
+			processCharacter(plr.Character)
+		end
+		plr.CharacterAdded:Connect(processCharacter)
+	end
+end
+
+Players.PlayerAdded:Connect(function(plr)
+	if plr ~= LocalPlayer then
+		plr.CharacterAdded:Connect(processCharacter)
+	end
+end)
+
+
+
+
+---- 3
+
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local VirtualUser = game:GetService("VirtualUser")
+
+-- Configurações
+local FirePositions = {
+	Vector2.new(-0.707, -832),
+	Vector2.new(-0.654, -246)
+}
+local centerTolerance = 0
+local maxDistance = 300
+local aimPartName = "FakeVisualCabesa"
+
+-- Verifica se há linha de visão
+local function canSeeTarget(targetPart)
+	if not targetPart or not targetPart.Parent then return false end
+	local origin = Camera.CFrame.Position
+	local direction = (targetPart.Position - origin)
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = { LocalPlayer.Character }
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+	local result = Workspace:Raycast(origin, direction, params)
+	if result then
+		return result.Instance:IsDescendantOf(targetPart.Parent)
+	end
+	return true
+end
+
+-- Verifica se está no centro da tela
+local function IsAtScreenCenter(screenPos)
+	local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+	return (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude <= centerTolerance
+end
+
+-- Loop otimizado
+RunService.RenderStepped:Connect(function()
+	if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		return
+	end
+
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character then
+			local targetPart = player.Character:FindFirstChild(aimPartName)
+			if targetPart then
+				local humanoid = player.Character:FindFirstChild("Humanoid")
+				if humanoid and humanoid.Health > 0 then
+					local hrpPos = LocalPlayer.Character.HumanoidRootPart.Position
+					local distance = (hrpPos - targetPart.Position).Magnitude
+					if distance <= maxDistance then
+						local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+						if onScreen and IsAtScreenCenter(screenPos) and canSeeTarget(targetPart) then
+							for _, pos in ipairs(FirePositions) do
+								VirtualUser:CaptureController()
+								VirtualUser:ClickButton1(Vector2.new(pos.X, pos.Y))
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end)
+
+
+
+
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- Configurações
+local aimPartName = "FakeVisualCabesa" -- usa a mesma cabeça do script CABESA
+local fovRadius = 40 -- pixels (aumenta o raio de mira)
+local hardLockSpeed = 1 -- 1 = instantâneo / 0.5 = muito rápido
+
+-- Função de visibilidade (linha de visão)
+local function canSeeTarget(targetPart)
+	if not targetPart or not targetPart.Parent then return false end
+	local origin = Camera.CFrame.Position
+	local direction = (targetPart.Position - origin)
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = { LocalPlayer.Character }
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+	local result = Workspace:Raycast(origin, direction, params)
+	if result then
+		return result.Instance:IsDescendantOf(targetPart.Parent)
+	end
+	return true
+end
+
+-- Busca o inimigo mais próximo do centro da tela
+local function getClosestTarget()
+	local closestPart, closestDist = nil, math.huge
+	local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character then
+			local part = player.Character:FindFirstChild(aimPartName)
+			if part then
+				local humanoid = player.Character:FindFirstChild("Humanoid")
+				if humanoid and humanoid.Health > 0 then
+					local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+					if onScreen and canSeeTarget(part) then
+						local dist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+						if dist <= fovRadius and dist < closestDist then
+							closestDist = dist
+							closestPart = part
+						end
+					end
+				end
+			end
+		end
+	end
+	return closestPart
+end
+
+-- Aimbot hard lock
+RunService.RenderStepped:Connect(function()
+	local targetPart = getClosestTarget()
+	if targetPart then
+		local targetCFrame = CFrame.new(Camera.CFrame.Position, targetPart.Position)
+		-- Mira forte e direta
+		Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, hardLockSpeed)
+	end
+end)
