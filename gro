@@ -238,7 +238,7 @@ local FirePositions = {
 	Vector2.new(-0.707, -832),
 	Vector2.new(-0.654, -246)
 }
-local centerTolerance = 20
+local centerTolerance = 25
 local maxDistance = 300
 local aimPartName = "FakeVisualCabesa"
 
