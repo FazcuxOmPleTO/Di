@@ -291,3 +291,71 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 end)
+
+
+
+
+
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- Configurações
+local aimPartName = "FakeVisualCabesa" -- usa a mesma cabeça do script CABESA
+local fovRadius = 40 -- pixels (aumenta o raio de mira)
+local hardLockSpeed = 1 -- 1 = instantâneo / 0.5 = muito rápido
+
+-- Função de visibilidade (linha de visão)
+local function canSeeTarget(targetPart)
+	if not targetPart or not targetPart.Parent then return false end
+	local origin = Camera.CFrame.Position
+	local direction = (targetPart.Position - origin)
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = { LocalPlayer.Character }
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+	local result = Workspace:Raycast(origin, direction, params)
+	if result then
+		return result.Instance:IsDescendantOf(targetPart.Parent)
+	end
+	return true
+end
+
+-- Busca o inimigo mais próximo do centro da tela
+local function getClosestTarget()
+	local closestPart, closestDist = nil, math.huge
+	local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character then
+			local part = player.Character:FindFirstChild(aimPartName)
+			if part then
+				local humanoid = player.Character:FindFirstChild("Humanoid")
+				if humanoid and humanoid.Health > 0 then
+					local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+					if onScreen and canSeeTarget(part) then
+						local dist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+						if dist <= fovRadius and dist < closestDist then
+							closestDist = dist
+							closestPart = part
+						end
+					end
+				end
+			end
+		end
+	end
+	return closestPart
+end
+
+-- Aimbot hard lock
+RunService.RenderStepped:Connect(function()
+	local targetPart = getClosestTarget()
+	if targetPart then
+		local targetCFrame = CFrame.new(Camera.CFrame.Position, targetPart.Position)
+		-- Mira forte e direta
+		Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, hardLockSpeed)
+	end
+end)
