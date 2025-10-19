@@ -305,7 +305,7 @@ local Camera = Workspace.CurrentCamera
 
 -- Configurações
 local aimPartName = "FakeVisualCabesa" -- usa a mesma cabeça do script CABESA
-local fovRadius = 0 -- pixels (aumenta o raio de mira)
+local fovRadius = 30 -- pixels (aumenta o raio de mira)
 local hardLockSpeed = 1 -- 1 = instantâneo / 0.5 = muito rápido
 
 -- Função de visibilidade (linha de visão)
