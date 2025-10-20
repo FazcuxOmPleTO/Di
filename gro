@@ -305,7 +305,7 @@ local Camera = Workspace.CurrentCamera
 
 -- Configurações
 local aimPartName = "FakeVisualCabesa" -- usa a mesma cabeça do script CABESA
-local fovRadius = 30 -- pixels (aumenta o raio de mira)
+local fovRadius = 0 -- pixels (aumenta o raio de mira)
 local hardLockSpeed = 1 -- 1 = instantâneo / 0.5 = muito rápido
 
 -- Função de visibilidade (linha de visão)
@@ -358,3 +358,15 @@ RunService.RenderStepped:Connect(function()
 		Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, hardLockSpeed)
 	end
 end)
+
+
+
+
+---- 5 eu
+
+for _, Item in pairs(game:GetService("CoreGui"):GetDescendants()) do
+	if Item:IsA("TextLabel") and Item.Text == "📆 Arceus X Origin"  then
+		Item.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent:Destroy()
+		break
+	end
+end
