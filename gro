@@ -130,7 +130,7 @@ print("[Bypass] Anticheat custom desativado (exceto Walk/Jump)")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local currentSize = Vector3.new(2, 2, 2)
+local currentSize = Vector3.new(2.2, 2.2, 2.2)
 
 -- Função auxiliar para detectar se um objeto tem face/decals
 local function hasFaceMarker(obj)
@@ -238,7 +238,7 @@ local FirePositions = {
 	Vector2.new(-0.707, -832),
 	Vector2.new(-0.654, -246)
 }
-local centerTolerance = 25
+local centerTolerance = 30
 local maxDistance = 300
 local aimPartName = "FakeVisualCabesa"
 
