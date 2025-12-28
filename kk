@@ -1,545 +1,307 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+--// Load WindUI
+local WindUI = loadstring(game:HttpGet(
+    "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
+))()
 
-local Window = Rayfield:CreateWindow({
-   Name = "Faz Completo",
-   Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
-   LoadingTitle = "Carregando...",
-   LoadingSubtitle = "Oi prazer sou o Lyrics",
-   Theme = "DarkBlue", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+--// Create Window + Key System
+local Window = WindUI:CreateWindow({
+    Title = "Faz Completo",
+    Icon = "zap",
+    Author = "Oi prazer sou o Lyrics",
+    Folder = "FazCompleto",
 
-   DisableRayfieldPrompts = false,
-   DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+    Size = UDim2.fromOffset(580, 460),
+    MinSize = Vector2.new(560, 350),
+    MaxSize = Vector2.new(850, 560),
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = true,
+    SideBarWidth = 200,
+    HideSearchBar = true,
 
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = calma, -- Create a custom folder for your hub/game
-      FileName = "Lyrics"
-   },
+    User = {
+        Enabled = true,
+        Anonymous = true,
+    },
 
-   Discord = {
-      Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
-      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
-      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
-   },
-
-   KeySystem = true, -- Set this to true to use our key system
-   KeySettings = {
-      Title = "Prove do seu Veneno bots",
-      Subtitle = "Sistema de Chave",
-      Note = "Acesso restrito.", -- Use this to tell the user how to get a key
-      FileName = "Chave", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
-      SaveKey = false, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"Batman"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
-   }
+    -- 🔐 KEY SYSTEM
+    KeySystem = {
+        Key = { "batman" },
+        Note = "Acesso restrito. Digite a key correta.",
+        SaveKey = false,
+    },
 })
 
-Rayfield:Notify({
-   Title = "vlw cumparsa",
-   Content = "paraem de xitar seus vermes!",
-   Duration = 6.5,
-   Image = 4483362458,
+--// Notify
+WindUI:Notify({
+    Title = "vlw cumparsa",
+    Content = "paraem de xitar seus vermes!",
+    Duration = 6
 })
 
-local Tab = Window:CreateTab("Básico", 97682995973876) -- Title, Image
-local Divider = Tab:CreateDivider()
+--// Tabs
+local Tabs = {
+    Basico   = Window:Tab({Title="Básico", Icon="home"}),
+    Esp      = Window:Tab({Title="ESP", Icon="eye"}),
+    Comprar  = Window:Tab({Title="Comprar", Icon="shopping-cart"}),
+    Combate  = Window:Tab({Title="Combate", Icon="crosshair"}),
+    TP       = Window:Tab({Title="Teleportes", Icon="map-pin"}),
+    Veiculo  = Window:Tab({Title="Veículo", Icon="car"}),
+}
 
-local Paragraph = Tab:CreateParagraph({Title = "Goats🏳️‍🌈", Content = "_____________________________"})
-local Divider = Tab:CreateDivider()
+-------------------------------------------------------
+-- BÁSICO
+-------------------------------------------------------
 
-local Button = Tab:CreateButton({
-   Name = " Ative isso é obrigatório se não o ban vem",
-   Callback = function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/ant'),true))()
-   end,
+Tabs.Basico:Paragraph({
+    Title = "Goats🏳️‍🌈",
+    Content = "_____________________________"
 })
 
-local Button = Tab:CreateButton({
-   Name = "shiftlock",
-   Callback = function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/shi'),true))()
-   end,
+Tabs.Basico:Button({
+    Title = "Ative isso é obrigatório se não o ban vem",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/ant"))()
+    end
 })
 
-local Button = Tab:CreateButton({
-   Name = "desativar autojump",
-   Callback = function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/desable'),true))()
-   end,
+Tabs.Basico:Button({
+    Title = "Shiftlock",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/shi"))()
+    end
 })
 
-
-local Button = Tab:CreateButton({
-   Name = " farmar rota",
-   Callback = function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/faz'),true))()
-   end,
+Tabs.Basico:Button({
+    Title = "Desativar AutoJump",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/desable"))()
+    end
 })
 
-local Button = Tab:CreateButton({
-   Name = " farmar de entregador",
-   Callback = function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/pizzayolo'),true))()
-   end,
+Tabs.Basico:Button({
+    Title = "Farmar Rota",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/faz"))()
+    end
 })
 
-local Button = Tab:CreateButton({
-   Name = "Esconder Identidade 🙅🏿‍♂️",
-   Callback = function()
--- Apagar "ExpBar" de PlayerGui do jogador local
-local player = game:GetService("Players").LocalPlayer
-local expBar = player.PlayerGui:FindFirstChild("ExpBar")
-if expBar then
-    expBar:Destroy()
-end
-   end,
+Tabs.Basico:Button({
+    Title = "Farmar de Entregador",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/pizzayolo"))()
+    end
 })
 
-local Button = Tab:CreateButton({
-   Name = "Zero delay nos botão tlgd?",
-   Callback = function()
-local Workspace = game:GetService("Workspace")
+Tabs.Basico:Button({
+    Title = "Esconder Identidade 🙅🏿‍♂️",
+    Callback = function()
+        local plr = game.Players.LocalPlayer
+        local gui = plr.PlayerGui:FindFirstChild("ExpBar")
+        if gui then gui:Destroy() end
+    end
+})
 
-local function updateProximityPrompts()
-    for i, v in ipairs(Workspace:GetDescendants()) do
-        if v.ClassName == "ProximityPrompt" then
-            v.HoldDuration = 0.0001
+Tabs.Basico:Button({
+    Title = "Zero delay nos botões",
+    Callback = function()
+        local ws = workspace
+
+        local function fix()
+            for _,v in pairs(ws:GetDescendants()) do
+                if v:IsA("ProximityPrompt") then
+                    v.HoldDuration = 0.0001
+                end
+            end
         end
+
+        fix()
+        ws.DescendantAdded:Connect(function(v)
+            if v:IsA("ProximityPrompt") then
+                v.HoldDuration = 0.0001
+            end
+        end)
     end
-end
+})
 
-updateProximityPrompts()
-
-Workspace.DescendantAdded:Connect(function(descendant)
-    if descendant.ClassName == "ProximityPrompt" then
-        descendant.HoldDuration = 0.000001
+Tabs.Basico:Button({
+    Title = "Atravessar Paredes",
+    Callback = function()
+        game:GetService("RunService").Stepped:Connect(function()
+            for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.CanCollide = false
+                end
+            end
+        end)
     end
-end)
-   end,
 })
 
-local Button = Tab:CreateButton({
-   Name = "Atravessar Paredes para bicudar ou sla",
-   Callback = function()
-   for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-    if v:IsA("BasePart") then
-        v.CanCollide = false
+Tabs.Basico:Button({
+    Title = "Remover Dano de Queda 💩",
+    Callback = function()
+        local dmg = game.ReplicatedStorage:FindFirstChild("ReceberDano")
+        if dmg then dmg:Destroy() end
     end
-end;
-game:GetService("RunService").Stepped:Connect(function()
-    for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-        if v:IsA("BasePart") then
-            v.CanCollide = false
-        end
+})
+
+Tabs.Basico:Button({
+    Title = "Infinite Yield",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
     end
-end)
-   end,
 })
 
-local Button = Tab:CreateButton({
-   Name = "Remover Dano de Queda 💩",
-   Callback = function()
-local replicatedStorage = game:GetService("ReplicatedStorage")
-local receberDano = replicatedStorage:FindFirstChild("ReceberDano")
-if receberDano then
-    receberDano:Destroy()
-end
-   end,
+-------------------------------------------------------
+-- ESP
+-------------------------------------------------------
+
+Tabs.Esp:Button({
+    Title = "ESP Player",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/Esp"))()
+    end
 })
 
-local Divider = Tab:CreateDivider()
+Tabs.Esp:Button({
+    Title = "ESP Carros",
+    Callback = function()
+        _G.ESP_Ativo = true
+        local carros = workspace:FindFirstChild("CarrosSpawnados")
+        if not carros then return end
 
-local Button = Tab:CreateButton({
-   Name = "Infinite Yield",
-   Callback = function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'),true))()
-   end,
-})
+        while _G.ESP_Ativo do
+            for _,carro in pairs(carros:GetChildren()) do
+                if carro:IsA("Model") and not carro:FindFirstChildOfClass("Highlight") then
+                    local porta = carro:FindFirstChild("Info")
+                        and carro.Info:FindFirstChild("Status")
+                        and carro.Info.Status:FindFirstChild("PortaLocked")
 
-local Tab = Window:CreateTab("Esp", 12907910012) -- Title, Image
-local Divider = Tab:CreateDivider()
+                    if porta then
+                        local h = Instance.new("Highlight", carro)
+                        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                        h.OutlineColor = Color3.new(1,1,1)
 
-local Button = Tab:CreateButton({
-   Name = " ESP Player",
-   Callback = function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/Esp'),true))()
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Esp Carros",
-   Callback = function()
-_G.ESP_Ativo = true -- Define a flag como ativa inicialmente
-
-local carrosSpawnados = workspace:FindFirstChild("CarrosSpawnados")
-
-if carrosSpawnados then
-    while _G.ESP_Ativo do
-        for _, carro in pairs(carrosSpawnados:GetChildren()) do
-            if carro:IsA("Model") then
-                -- Verifica se o carro já tem um Highlight
-                if not carro:FindFirstChildOfClass("Highlight") then
-                    local info = carro:FindFirstChild("Info")
-                    if info then
-                        local status = info:FindFirstChild("Status")
-                        if status then
-                            local portaLocked = status:FindFirstChild("PortaLocked")
-                            
-                            if portaLocked and typeof(portaLocked.Value) == "boolean" then
-                                -- Cria o Highlight
-                                local highlight = Instance.new("Highlight")
-                                highlight.Parent = carro
-                                
-                                -- Define a cor com base no estado de "PortaLocked"
-                                if portaLocked.Value then
-                                    highlight.FillColor = Color3.fromRGB(0, 255, 0) -- Verde para trancado
-                                else
-                                    highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Vermelho para destrancado
-                                end
-                                
-                                highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Cor da borda
-                                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- Sempre visível
-                                
-                                -- Atualiza o highlight caso o status mude
-                                portaLocked:GetPropertyChangedSignal("Value"):Connect(function()
-                                    if portaLocked.Value then
-                                        highlight.FillColor = Color3.fromRGB(0, 255, 0) -- Verde para trancado
-                                    else
-                                        highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Vermelho para destrancado
-                                    end
-                                end)
-                            else
-                                warn("Atributo 'PortaLocked' não encontrado ou inválido para o carro: " .. carro.Name)
-                            end
-                        else
-                            warn("Status não encontrado no carro: " .. carro.Name)
+                        local function update()
+                            h.FillColor = porta.Value and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
                         end
-                    else
-                        warn("Info não encontrada no carro: " .. carro.Name)
+                        update()
+                        porta:GetPropertyChangedSignal("Value"):Connect(update)
                     end
                 end
             end
+            task.wait(1)
         end
-        
-        -- Espera antes de verificar novamente
-        task.wait(1) -- Configurável (1 segundo)
     end
-else
-    warn("Pasta 'CarrosSpawnados' não encontrada!")
+})
+
+-------------------------------------------------------
+-- COMPRAR
+-------------------------------------------------------
+
+local function comprar(item)
+    game.ReplicatedStorage.InventarioSystem.Comprar:FireServer(item)
 end
 
-print("ESP loop encerrado.")
-   end,
-})
+Tabs.Comprar:Button({Title="Pizza 🍕", Callback=function() comprar("Pizza") end})
+Tabs.Comprar:Button({Title="Água 🌊", Callback=function() comprar("Agua") end})
+Tabs.Comprar:Button({Title="Coca-Cola 🍼", Callback=function() comprar("Coca-Cola") end})
+Tabs.Comprar:Button({Title="Kit de Reparo 🧰", Callback=function() comprar("Kit de Reparo") end})
+Tabs.Comprar:Button({Title="Gasolina ⛽", Callback=function() comprar("Jerry Can") end})
 
-local Tab = Window:CreateTab("Comprar", 13152284137) -- Title, Image
-local Divider = Tab:CreateDivider()
+-------------------------------------------------------
+-- COMBATE
+-------------------------------------------------------
 
-local Button = Tab:CreateButton({
-   Name = "Pizza 🍕",
-   Callback = function()
-local args = {
-	"Pizza"
-}
-game:GetService("ReplicatedStorage"):WaitForChild("InventarioSystem"):WaitForChild("Comprar"):FireServer(unpack(args))
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Água 🌊",
-   Callback = function()
-local args = {
-	"Agua"
-}
-game:GetService("ReplicatedStorage"):WaitForChild("InventarioSystem"):WaitForChild("Comprar"):FireServer(unpack(args))
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Coca-Cola 🍼",
-   Callback = function()
-local args = {
-	"Coca-Cola"
-}
-game:GetService("ReplicatedStorage"):WaitForChild("InventarioSystem"):WaitForChild("Comprar"):FireServer(unpack(args))
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Kit de Reparo 🧰",
-   Callback = function()
-local args = {
-	"Kit de Reparo"
-}
-game:GetService("ReplicatedStorage"):WaitForChild("InventarioSystem"):WaitForChild("Comprar"):FireServer(unpack(args))
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Gasolina ⛽",
-   Callback = function()
-local args = {
-	"Jerry Can"
-}
-game:GetService("ReplicatedStorage"):WaitForChild("InventarioSystem"):WaitForChild("Comprar"):FireServer(unpack(args))
-   end,
-})
-
-local Tab = Window:CreateTab("Combate", 7113019423) -- Title, Image
-local Divider = Tab:CreateDivider()
-
-local Button = Tab:CreateButton({
-   Name = "Acerta izi hitb",
-   Callback = function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/hitbox"))()
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Cerebro Grande Para jogar clipando",
-   Callback = function()
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-local currentSize = Vector3.new(2.6, 2.6, 2.6) -- Edite esse valor manualmente se quiser
-
--- Função para aplicar a hitbox grande
-local function applyHeadSize(char)
-    task.wait(0.1)
-    local head = char:FindFirstChild("Head")
-    if not head or char == LocalPlayer.Character then return end
-    if char:FindFirstChild("FakeVisualHead") then return end
-
-    -- Clona a cabeça visual
-    local fakeHead = head:Clone()
-    fakeHead.Name = "FakeVisualHead"
-    fakeHead.Size = Vector3.new(1, 1, 1)
-    fakeHead.Transparency = 0
-    fakeHead.CanCollide = false
-    fakeHead.Anchored = false
-    fakeHead.Massless = true
-    fakeHead.Parent = char
-
-    -- Altera a hitbox física real
-    head.Size = currentSize
-    head.Transparency = 1
-    head.CanCollide = false
-    head.Massless = true
-
-    -- Torna a face invisível
-    local face = head:FindFirstChildOfClass("Decal")
-    if face then
-        face.Transparency = 1
+Tabs.Combate:Button({
+    Title = "Acerta izi hitbox",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/hitbox"))()
     end
+})
 
-    -- Solda visual na cabeça real
-    local weld = Instance.new("WeldConstraint")
-    weld.Part0 = head
-    weld.Part1 = fakeHead
-    weld.Parent = head
-
-    -- Proteção contra scripts que tentam restaurar o tamanho original
-    head:GetPropertyChangedSignal("Size"):Connect(function()
-        if head.Size ~= currentSize then
-            head.Size = currentSize
-        end
-    end)
-end
-
--- Monitora cada player para reaplicar quando morrer
-local function monitorPlayer(player)
-    if player == LocalPlayer then return end
-
-    player.CharacterAdded:Connect(function(char)
-        char:WaitForChild("Head", 5)
-        applyHeadSize(char)
-    end)
-
-    if player.Character then
-        applyHeadSize(player.Character)
+Tabs.Combate:Button({
+    Title = "Cerebro Grande",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/l"))()
     end
+})
+
+Tabs.Combate:Button({
+    Title = "Time Stop",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/tim"))()
+    end
+})
+
+Tabs.Combate:Button({
+    Title = "Recoil Baixinho",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/n"))()
+    end
+})
+
+-------------------------------------------------------
+-- TELEPORTES
+-------------------------------------------------------
+
+local TS = game:GetService("TweenService")
+local plr = game.Players.LocalPlayer
+
+local function TP(cf, t)
+    TS:Create(plr.Character.HumanoidRootPart, TweenInfo.new(t, Enum.EasingStyle.Linear), {CFrame = cf}):Play()
 end
 
--- Inicializa todos os players atuais
-for _, player in ipairs(Players:GetPlayers()) do
-    monitorPlayer(player)
-end
+Tabs.TP:Button({Title="Hospital", Callback=function() TP(CFrame.new(3908,4,2100),8) end})
+Tabs.TP:Button({Title="Praça", Callback=function() TP(CFrame.new(3610,8,2896),8) end})
+Tabs.TP:Button({Title="Oficina", Callback=function() TP(CFrame.new(3085,3,3192),8) end})
+Tabs.TP:Button({Title="Banco do Brasil", Callback=function() TP(CFrame.new(3220,10,2323),8) end})
+Tabs.TP:Button({Title="Cassino", Callback=function() TP(CFrame.new(4066,13,-2059),10.5) end})
 
--- Quando um novo player entrar
-Players.PlayerAdded:Connect(monitorPlayer)
-   end,
-})
+-------------------------------------------------------
+-- VEÍCULO
+-------------------------------------------------------
 
-local Button = Tab:CreateButton({
-   Name = "Cerebro Grande",
-   Callback = function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/l'),true))()
-   end,
-})
+Tabs.Veiculo:Button({
+    Title = "Vida Infinita ⛑️",
+    Callback = function()
+        local carros = workspace:FindFirstChild("CarrosSpawnados")
+        if not carros then return end
 
-local Button = Tab:CreateButton({
-   Name = "Time Stop",
-   Callback = function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/tim'),true))()
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Recoil Baixinho",
-   Callback = function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/n'),true))()
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Munição Infinita 🔫",
-   Callback = function()
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local TARGET_VALUE = 999999999
-
--- Função para congelar o valor
-local function congelarAmmo(valor)
-    if valor:IsA("IntValue") or valor:IsA("NumberValue") then
-        valor.Value = TARGET_VALUE
-
-        task.spawn(function()
-            while valor.Parent do
-                if valor.Value ~= TARGET_VALUE then
-                    valor.Value = TARGET_VALUE
+        for _,carro in pairs(carros:GetChildren()) do
+            local status = carro:FindFirstChild("Info") and carro.Info:FindFirstChild("Status")
+            if status then
+                if status:FindFirstChild("Vida") then
+                    status.Vida.Value = 99999
+                    status.Vida:GetPropertyChangedSignal("Value"):Connect(function()
+                        status.Vida.Value = 99999
+                    end)
                 end
-                task.wait(0.1)
+                if status:FindFirstChild("Quebrou") then
+                    status.Quebrou.Value = false
+                end
             end
-        end)
-    end
-end
-
--- Verifica se a Tool pertence ao jogador e tem CurrentAmmo
-local function verificarArma(tool)
-    if tool:IsA("Tool") and tool:FindFirstChild("CurrentAmmo") then
-        -- Só age se a Tool estiver no Character do jogador local
-        if tool.Parent == LocalPlayer.Character then
-            congelarAmmo(tool.CurrentAmmo)
         end
     end
-end
-
--- Verifica ferramentas já no personagem
-if LocalPlayer.Character then
-    for _, item in pairs(LocalPlayer.Character:GetChildren()) do
-        verificarArma(item)
-    end
-end
-
--- Reage a novas ferramentas equipadas
-LocalPlayer.CharacterAdded:Connect(function(char)
-    char.ChildAdded:Connect(verificarArma)
-end)
-
-if LocalPlayer.Character then
-    LocalPlayer.Character.ChildAdded:Connect(verificarArma)
-end
-
--- (Opcional) verifica também se alguma arma for jogada no workspace depois
-workspace.DescendantAdded:Connect(function(desc)
-    verificarArma(desc)
-end)
-   end,
 })
 
-local Tab = Window:CreateTab("Teleportes", 10516012746) -- Title, Image
-local Divider = Tab:CreateDivider()
+Tabs.Veiculo:Button({
+    Title = "Gasolina Infinita ⛽",
+    Callback = function()
+        local carros = workspace:FindFirstChild("CarrosSpawnados")
+        if not carros then return end
 
-local Button = Tab:CreateButton({
-   Name = "Hospital",
-   Callback = function()
-tweenService, tweenInfo = game:GetService("TweenService"), TweenInfo.new(8, Enum.EasingStyle.Linear)tweenService:Create(game:GetService("Players")["LocalPlayer"].Character.HumanoidRootPart, tweenInfo, {CFrame = CFrame.new(3908.38525390625, 4.651368618011475, 2100.5224609375)}):Play()
-   end,
-})
+        for _,carro in pairs(carros:GetChildren()) do
+            local gas = carro:FindFirstChild("Info")
+                and carro.Info:FindFirstChild("Status")
+                and carro.Info.Status:FindFirstChild("Gasolina")
 
-local Button = Tab:CreateButton({
-   Name = "Praça",
-   Callback = function()
-tweenService, tweenInfo = game:GetService("TweenService"), TweenInfo.new(8, Enum.EasingStyle.Linear)tweenService:Create(game:GetService("Players")["LocalPlayer"].Character.HumanoidRootPart, tweenInfo, {CFrame = CFrame.new(3610.766845703125, 8.509111404418945, 2896.408203125)}):Play()
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Oficina",
-   Callback = function()
-tweenService, tweenInfo = game:GetService("TweenService"), TweenInfo.new(8, Enum.EasingStyle.Linear)tweenService:Create(game:GetService("Players")["LocalPlayer"].Character.HumanoidRootPart, tweenInfo, {CFrame = CFrame.new(3085.550537109375, 3.7505321502685547, 3192.69287109375)}):Play()
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Banco do Brasil",
-   Callback = function()
-tweenService, tweenInfo = game:GetService("TweenService"), TweenInfo.new(8, Enum.EasingStyle.Linear)tweenService:Create(game:GetService("Players")["LocalPlayer"].Character.HumanoidRootPart, tweenInfo, {CFrame = CFrame.new(3220.339599609375, 10.168707847595215, 2323.764892578125)}):Play()
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Cassino",
-   Callback = function()
-tweenService, tweenInfo = game:GetService("TweenService"), TweenInfo.new(10.5, Enum.EasingStyle.Linear)tweenService:Create(game:GetService("Players")["LocalPlayer"].Character.HumanoidRootPart, tweenInfo, {CFrame = CFrame.new(4066.586181640625, 13.67834758758545, -2059.316650390625)}):Play()
-   end,
-})
-
-local Tab = Window:CreateTab("Veículo", 18209578679) -- Title, Image
-local Divider = Tab:CreateDivider()
-
-local Button = Tab:CreateButton({
-   Name = "Vida Infinita ⛑️",
-   Callback = function()
-local carros = workspace:FindFirstChild("CarrosSpawnados")
-if not carros then return end
-
-for _, carro in ipairs(carros:GetChildren()) do
-    local status = carro:FindFirstChild("Info")
-        and carro.Info:FindFirstChild("Status")
-
-    if status then
-        -- Congelar Vida
-        local vida = status:FindFirstChild("Vida")
-        if vida and vida:IsA("NumberValue") then
-            vida.Value = 99999
-            vida:GetPropertyChangedSignal("Value"):Connect(function()
-                vida.Value = 99999
-            end)
-        end
-
-        -- Congelar Quebrou
-        local quebrou = status:FindFirstChild("Quebrou")
-        if quebrou and quebrou:IsA("BoolValue") then
-            quebrou.Value = false
-            quebrou:GetPropertyChangedSignal("Value"):Connect(function()
-                quebrou.Value = false
-            end)
+            if gas then
+                gas.Value = 99999
+                gas:GetPropertyChangedSignal("Value"):Connect(function()
+                    gas.Value = 99999
+                end)
+            end
         end
     end
-end
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Gasolina Infinita ⛽",
-   Callback = function()
-local carros = workspace:FindFirstChild("CarrosSpawnados")
-if not carros then return end
-
-for _, carro in ipairs(carros:GetChildren()) do
-    local gasolina = carro:FindFirstChild("Info")
-        and carro.Info:FindFirstChild("Status")
-        and carro.Info.Status:FindFirstChild("Gasolina")
-    
-    if gasolina and gasolina:IsA("NumberValue") then
-        gasolina.Value = 99999
-
-        -- Congelar o valor
-        gasolina:GetPropertyChangedSignal("Value"):Connect(function()
-            gasolina.Value = 99999
-        end)
-    end
-end
-   end,
 })
