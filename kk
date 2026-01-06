@@ -221,7 +221,14 @@ Tabs.Combate:Button({
 })
 
 Tabs.Combate:Button({
-    Title = "Cerebro Grande",
+    Title = "Auto Fire Mobile",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/at"))()
+    end
+})
+
+Tabs.Combate:Button({
+    Title = "Hed 1.50",
     Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/l"))()
     end
