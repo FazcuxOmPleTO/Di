@@ -20,95 +20,115 @@ local isHolding = false
 local hadTargetLastFrame = false
 local touchId = 5000
 
--- FIND FIRE BUTTON
+-- ===== FIND FIRE BUTTON (FIX MULTI-PLACE) =====
 local function findFireButton()
-	local gui = Players.LocalPlayer:WaitForChild("PlayerGui")
-	for _, o in ipairs(gui:GetDescendants()) do
-		if o:IsA("ImageButton") or o:IsA("TextButton") then
-			local n = o.Name:lower()
-			if n:find("fire") or n:find("shoot") or n:find("attack") then
-				return o
-			end
-		end
-	end
+    local plr = Players.LocalPlayer
+    local gui = plr:WaitForChild("PlayerGui")
+
+    -- 🎯 PLACE COM HUDSYSTEM
+    local ok, btn = pcall(function()
+        return gui.HudSystem.Gun.GunButtons.FireButton
+    end)
+
+    if ok and btn and btn:IsA("GuiButton") then
+        return btn
+    end
+
+    -- 🔁 FALLBACK (OUTROS PLACES)
+    for _, o in ipairs(gui:GetDescendants()) do
+        if o:IsA("ImageButton") or o:IsA("TextButton") then
+            local n = o.Name:lower()
+            if n:find("fire") or n:find("shoot") or n:find("attack") then
+                return o
+            end
+        end
+    end
+
+    return nil
 end
 
+-- ESPERA GUI CARREGAR
+task.wait(1)
 fireButton = findFireButton()
+
 if fireButton then
-	fireButton.BackgroundTransparency = 1
-	fireButton.Active = true
+    fireButton.Active = true
+    fireButton.AutoButtonColor = true
+    fireButton.BackgroundTransparency = 1
 end
 
 -- FIRE POSITION
 local function getFirePos()
-	if fireButton then
-		local p = fireButton.AbsolutePosition + fireButton.AbsoluteSize / 2
-		return p.X, p.Y
-	end
-	local v = Camera.ViewportSize
-	return v.X * 0.85, v.Y * 0.82
+    if fireButton then
+        local p = fireButton.AbsolutePosition + fireButton.AbsoluteSize / 2
+        return p.X, p.Y
+    end
+    local v = Camera.ViewportSize
+    return v.X * 0.85, v.Y * 0.82
 end
 
 -- VALID PLAYER
 local function isValid(plr)
-	local c = plr.Character
-	if not c then return false end
-	local h = c:FindFirstChild("Humanoid")
-	local r = c:FindFirstChild("HumanoidRootPart")
-	return h and r and h.Health > 0
+    local c = plr.Character
+    if not c then return false end
+    local h = c:FindFirstChild("Humanoid")
+    local r = c:FindFirstChild("HumanoidRootPart")
+    return h and r and h.Health > 0
 end
 
 -- TARGET FIND
 local function getTarget()
-	local lp = Players.LocalPlayer
-	local lc = lp.Character
-	if not lc or not lc:FindFirstChild("HumanoidRootPart") then
-		return nil
-	end
+    local lp = Players.LocalPlayer
+    local lc = lp.Character
+    if not lc or not lc:FindFirstChild("HumanoidRootPart") then
+        return nil
+    end
 
-	local center = Camera.ViewportSize / 2
-	local best, dist = nil, math.huge
+    local center = Camera.ViewportSize / 2
+    local best, dist = nil, math.huge
 
-	for _, p in ipairs(Players:GetPlayers()) do
-		if p ~= lp and isValid(p) and (not teamCheck or p.Team ~= lp.Team) then
-			local h = p.Character.Head
-			local pos, on = Camera:WorldToViewportPoint(h.Position)
-			if on and pos.Z > 0 then
-				local d = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-				if d < fov and d < dist then
-					dist = d
-					best = p
-				end
-			end
-		end
-	end
-	return best
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= lp and isValid(p) and (not teamCheck or p.Team ~= lp.Team) then
+            local head = p.Character:FindFirstChild("Head")
+            if head then
+                local pos, on = Camera:WorldToViewportPoint(head.Position)
+                if on and pos.Z > 0 then
+                    local d = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                    if d < fov and d < dist then
+                        dist = d
+                        best = p
+                    end
+                end
+            end
+        end
+    end
+    return best
 end
 
 -- RELEASE TOUCH
 local function releaseTouch(x, y)
-	VirtualInputManager:SendTouchEvent(touchId, 2, x, y)  -- End touch
-	isHolding = false
+    VirtualInputManager:SendTouchEvent(touchId, 2, x, y)
+    isHolding = false
 end
 
--- MAIN LOOP (FRAME-SAFE)
+-- MAIN LOOP
 RunService.RenderStepped:Connect(function()
-	local target = getTarget()
-	local x, y = getFirePos()
+    local target = getTarget()
+    local x, y = getFirePos()
 
-	if target then
-		if not isHolding then
-			touchId = touchId + 1
-			VirtualInputManager:SendTouchEvent(touchId, 0, x, y)  -- Begin touch
-			isHolding = true
-		end
-		hadTargetLastFrame = true
-	else
-		if isHolding then
-			releaseTouch(x, y)
-		end
-		hadTargetLastFrame = false
-	end
+    if target then
+        if not isHolding then
+            touchId += 1
+            VirtualInputManager:SendTouchEvent(touchId, 0, x, y)
+            isHolding = true
+        end
+        hadTargetLastFrame = true
+    else
+        if isHolding then
+            releaseTouch(x, y)
+        end
+        hadTargetLastFrame = false
+    end
 end)
 
-print("✅ (CORRIGIDO)")
+print("✅")
