@@ -1,69 +1,37 @@
+_G.ArmSize = 3
+_G.Disabled = true
+
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local currentSize = Vector3.new(2.5, 2.5, 2.5) -- Edite esse valor manualmente se quiser
+game:GetService("RunService").RenderStepped:Connect(function()
+	if _G.Disabled then
+		for _, plr in ipairs(Players:GetPlayers()) do
+			if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") then
+				for _, nome in ipairs({
+					"LeftUpperArm", "LeftLowerArm", "LeftHand",
+					"RightUpperArm", "RightLowerArm", "RightHand"
+				}) do
+					local part = plr.Character:FindFirstChild(nome)
+					if part then
+						pcall(function()
+							-- Aumenta hitbox real
+							part.Size = Vector3.new(_G.ArmSize, _G.ArmSize, _G.ArmSize)
+							part.CanCollide = false
+							part.Transparency = 1
 
--- Função para aplicar a hitbox grande
-local function applyHeadSize(char)
-    task.wait(0.1)
-    local head = char:FindFirstChild("Head")
-    if not head or char == LocalPlayer.Character then return end
-    if char:FindFirstChild("FakeVisualHead") then return end
-
-    -- Clona a cabeça visual
-    local fakeHead = head:Clone()
-    fakeHead.Name = "FakeVisualHead"
-    fakeHead.Size = Vector3.new(1, 1, 1)
-    fakeHead.Transparency = 0
-    fakeHead.CanCollide = false
-    fakeHead.Anchored = false
-    fakeHead.Massless = true
-    fakeHead.Parent = char
-
-    -- Altera a hitbox física real
-    head.Size = currentSize
-    head.Transparency = 1
-    head.CanCollide = false
-    head.Massless = true
-
-    -- Torna a face invisível
-    local face = head:FindFirstChildOfClass("Decal")
-    if face then
-        face.Transparency = 1
-    end
-
-    -- Solda visual na cabeça real
-    local weld = Instance.new("WeldConstraint")
-    weld.Part0 = head
-    weld.Part1 = fakeHead
-    weld.Parent = head
-
-    -- Proteção contra scripts que tentam restaurar o tamanho original
-    head:GetPropertyChangedSignal("Size"):Connect(function()
-        if head.Size ~= currentSize then
-            head.Size = currentSize
-        end
-    end)
-end
-
--- Monitora cada player para reaplicar quando morrer
-local function monitorPlayer(player)
-    if player == LocalPlayer then return end
-
-    player.CharacterAdded:Connect(function(char)
-        char:WaitForChild("Head", 5)
-        applyHeadSize(char)
-    end)
-
-    if player.Character then
-        applyHeadSize(player.Character)
-    end
-end
-
--- Inicializa todos os players atuais
-for _, player in ipairs(Players:GetPlayers()) do
-    monitorPlayer(player)
-end
-
--- Quando um novo player entrar
-Players.PlayerAdded:Connect(monitorPlayer)
+							-- Cria mesh visual falsa do tamanho original
+							if not part:FindFirstChild("VisualFix") then
+								local mesh = Instance.new("SpecialMesh")
+								mesh.Name = "VisualFix"
+								mesh.MeshType = Enum.MeshType.Brick
+								mesh.Scale = Vector3.new(1 / _G.ArmSize, 1 / _G.ArmSize, 1 / _G.ArmSize)
+								mesh.Parent = part
+							end
+						end)
+					end
+				end
+			end
+		end
+	end
+end)
