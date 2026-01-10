@@ -214,7 +214,7 @@ Tabs.Comprar:Button({Title="Gasolina ⛽", Callback=function() comprar("Jerry Ca
 -------------------------------------------------------
 
 Tabs.Combate:Button({
-    Title = "Acerta izi hitbox",
+    Title = "hitbox legit",
     Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/FazcuxOmPleTO/Di/refs/heads/main/hitbox"))()
     end
