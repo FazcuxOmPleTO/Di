@@ -1,6 +1,5 @@
---// WeaponSystem Silent Tracking (PC + Mobile REAL)
+--// WeaponSystem Silent Tracker (PC + Mobile REAL)
 
---// Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -9,29 +8,26 @@ local UserInputService = game:GetService("UserInputService")
 
 local LP = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
+local Mouse = LP:GetMouse()
 
---// WeaponSystem
 local WS = require(
     ReplicatedStorage
         :WaitForChild("WeaponsSystem")
         :WaitForChild("WeaponsSystem")
 )
 
-local WSCamera = WS.camera
-
---// CONFIG
+-- CONFIG
 local FOV_RADIUS = 360
 local TARGET_PART = "Head"
 local PREDICTION = 0.045
 local HEAD_OFFSET = Vector3.new(0, 0.12, 0)
 
---// Utils
+-- Utils
 local function worldToScreen(pos)
     local v, onScreen = Camera:WorldToViewportPoint(pos)
     return Vector2.new(v.X, v.Y), onScreen
 end
 
---// Centro de mira
 local function getCenter()
     if UserInputService.TouchEnabled then
         return Vector2.new(
@@ -39,15 +35,13 @@ local function getCenter()
             Camera.ViewportSize.Y / 2
         )
     else
-        local mouse = UserInputService:GetMouseLocation()
-        return Vector2.new(mouse.X, mouse.Y)
+        local m = UserInputService:GetMouseLocation()
+        return Vector2.new(m.X, m.Y)
     end
 end
 
---// Target selector
 local function getTarget()
-    local bestTarget
-    local bestDist = FOV_RADIUS
+    local best, bestDist = nil, FOV_RADIUS
     local center = getCenter()
 
     for _, plr in ipairs(Players:GetPlayers()) do
@@ -58,26 +52,24 @@ local function getTarget()
             local root = char:FindFirstChild("HumanoidRootPart")
 
             if hum and hum.Health > 0 and part and root then
-                local screenPos, onScreen = worldToScreen(part.Position)
+                local screen, onScreen = worldToScreen(part.Position)
                 if onScreen then
-                    local dist = (screenPos - center).Magnitude
+                    local dist = (screen - center).Magnitude
                     if dist < bestDist then
                         bestDist = dist
-                        bestTarget = part
+                        best = part
                     end
                 end
             end
         end
     end
 
-    return bestTarget
+    return best
 end
 
---// MOBILE: usa câmera (igual antes)
+-- MOBILE (igual antes)
 local function mobileSilent()
     if not UserInputService.TouchEnabled then return end
-    if not WSCamera or not WSCamera.currentCFrame then return end
-
     local weapon = WS.currentWeapon
     if not weapon or not weapon.activated then return end
 
@@ -92,37 +84,43 @@ local function mobileSilent()
         + HEAD_OFFSET
         + root.AssemblyLinearVelocity * PREDICTION
 
-    local camPos = WSCamera.currentCFrame.Position
-    WSCamera.currentCFrame = CFrame.lookAt(camPos, predicted)
-end
-
---// PC: silent REAL (raycast)
-local function pcSilent()
-    if UserInputService.TouchEnabled then return end
-
-    WS.aimRayCallback = function()
-        local target = getTarget()
-        if not target then
-            return Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 1000)
-        end
-
-        local root = target.Parent:FindFirstChild("HumanoidRootPart")
-        if not root then return end
-
-        local predicted =
-            target.Position
-            + HEAD_OFFSET
-            + root.AssemblyLinearVelocity * PREDICTION
-
-        local origin = Camera.CFrame.Position
-        local dir = (predicted - origin).Unit * 1000
-
-        return Ray.new(origin, dir)
+    local cam = WS.camera
+    if cam and cam.currentCFrame then
+        local pos = cam.currentCFrame.Position
+        cam.currentCFrame = CFrame.lookAt(pos, predicted)
     end
 end
 
---// Loop
+-- PC (O QUE FALTAVA)
+local oldUnitRay = Mouse.UnitRay
 RunService.RenderStepped:Connect(function()
-    mobileSilent()
-    pcSilent()
+    if UserInputService.TouchEnabled then
+        mobileSilent()
+        return
+    end
+
+    local weapon = WS.currentWeapon
+    if not weapon or not weapon.activated then
+        Mouse.UnitRay = oldUnitRay
+        return
+    end
+
+    local target = getTarget()
+    if not target then
+        Mouse.UnitRay = oldUnitRay
+        return
+    end
+
+    local root = target.Parent:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local predicted =
+        target.Position
+        + HEAD_OFFSET
+        + root.AssemblyLinearVelocity * PREDICTION
+
+    local origin = Camera.CFrame.Position
+    local dir = (predicted - origin).Unit
+
+    Mouse.UnitRay = Ray.new(origin, dir * 1000)
 end)
