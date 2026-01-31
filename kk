@@ -1,5 +1,4 @@
---// WeaponSystem Silent Tracking (PC + Mobile)
---// Tracker de bala (não move mouse, não força câmera)
+--// WeaponSystem Silent Tracking (PC + Mobile REAL)
 
 --// Services
 local Players = game:GetService("Players")
@@ -7,7 +6,6 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
-local GuiService = game:GetService("GuiService")
 
 local LP = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
@@ -33,25 +31,24 @@ local function worldToScreen(pos)
     return Vector2.new(v.X, v.Y), onScreen
 end
 
---// Centro da mira (PC = mouse corrigido | Mobile = centro da tela)
-local function getAimCenter()
+--// Centro de mira
+local function getCenter()
     if UserInputService.TouchEnabled then
         return Vector2.new(
             Camera.ViewportSize.X / 2,
             Camera.ViewportSize.Y / 2
         )
     else
-        local inset = GuiService:GetGuiInset()
-        local mousePos = UserInputService:GetMouseLocation() - inset
-        return Vector2.new(mousePos.X, mousePos.Y)
+        local mouse = UserInputService:GetMouseLocation()
+        return Vector2.new(mouse.X, mouse.Y)
     end
 end
 
 --// Target selector
 local function getTarget()
-    local bestTarget = nil
+    local bestTarget
     local bestDist = FOV_RADIUS
-    local center = getAimCenter()
+    local center = getCenter()
 
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LP and plr.Character then
@@ -76,8 +73,9 @@ local function getTarget()
     return bestTarget
 end
 
---// CORE TRACKING (bala acompanha, câmera não é forçada)
-local function applySilent()
+--// MOBILE: usa câmera (igual antes)
+local function mobileSilent()
+    if not UserInputService.TouchEnabled then return end
     if not WSCamera or not WSCamera.currentCFrame then return end
 
     local weapon = WS.currentWeapon
@@ -89,15 +87,42 @@ local function applySilent()
     local root = target.Parent:FindFirstChild("HumanoidRootPart")
     if not root then return end
 
-    local predictedPos =
+    local predicted =
         target.Position
         + HEAD_OFFSET
         + root.AssemblyLinearVelocity * PREDICTION
 
     local camPos = WSCamera.currentCFrame.Position
-    WSCamera.currentCFrame = CFrame.lookAt(camPos, predictedPos)
+    WSCamera.currentCFrame = CFrame.lookAt(camPos, predicted)
 end
 
---// Duplo timing (igual WeaponSystem)
-RunService.RenderStepped:Connect(applySilent)
-RunService.Heartbeat:Connect(applySilent)
+--// PC: silent REAL (raycast)
+local function pcSilent()
+    if UserInputService.TouchEnabled then return end
+
+    WS.aimRayCallback = function()
+        local target = getTarget()
+        if not target then
+            return Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 1000)
+        end
+
+        local root = target.Parent:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        local predicted =
+            target.Position
+            + HEAD_OFFSET
+            + root.AssemblyLinearVelocity * PREDICTION
+
+        local origin = Camera.CFrame.Position
+        local dir = (predicted - origin).Unit * 1000
+
+        return Ray.new(origin, dir)
+    end
+end
+
+--// Loop
+RunService.RenderStepped:Connect(function()
+    mobileSilent()
+    pcSilent()
+end)
