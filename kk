@@ -1,5 +1,5 @@
 --// WeaponSystem Silent Tracking (PC + Mobile)
---// Aim Tracker de bala (não move mouse, não força câmera)
+--// Tracker de bala (não move mouse, não força câmera)
 
 --// Services
 local Players = game:GetService("Players")
@@ -7,6 +7,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 
 local LP = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
@@ -21,7 +22,7 @@ local WS = require(
 local WSCamera = WS.camera
 
 --// CONFIG
-local FOV_RADIUS = 369
+local FOV_RADIUS = 360
 local TARGET_PART = "Head"
 local PREDICTION = 0.045
 local HEAD_OFFSET = Vector3.new(0, 0.12, 0)
@@ -32,7 +33,7 @@ local function worldToScreen(pos)
     return Vector2.new(v.X, v.Y), onScreen
 end
 
---// Centro da mira (PC = mouse | Mobile = centro da tela)
+--// Centro da mira (PC = mouse corrigido | Mobile = centro da tela)
 local function getAimCenter()
     if UserInputService.TouchEnabled then
         return Vector2.new(
@@ -40,7 +41,8 @@ local function getAimCenter()
             Camera.ViewportSize.Y / 2
         )
     else
-        local mousePos = UserInputService:GetMouseLocation()
+        local inset = GuiService:GetGuiInset()
+        local mousePos = UserInputService:GetMouseLocation() - inset
         return Vector2.new(mousePos.X, mousePos.Y)
     end
 end
@@ -74,7 +76,7 @@ local function getTarget()
     return bestTarget
 end
 
---// CORE TRACKING (bala acompanha, não força câmera livre)
+--// CORE TRACKING (bala acompanha, câmera não é forçada)
 local function applySilent()
     if not WSCamera or not WSCamera.currentCFrame then return end
 
@@ -96,6 +98,6 @@ local function applySilent()
     WSCamera.currentCFrame = CFrame.lookAt(camPos, predictedPos)
 end
 
---// Duplo timing (igual sistema base)
+--// Duplo timing (igual WeaponSystem)
 RunService.RenderStepped:Connect(applySilent)
 RunService.Heartbeat:Connect(applySilent)
