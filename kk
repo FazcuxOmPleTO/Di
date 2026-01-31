@@ -1,8 +1,7 @@
---// WeaponSystem Silent Aim (Mobile + PC FIX)
+--// WeaponSystem REAL Silent Aim (PC + Mobile)
 
 --// Services
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -16,13 +15,11 @@ local WS = require(
         :WaitForChild("WeaponsSystem")
 )
 
-local WSCamera = WS.camera
-
 --// CONFIG
-local FOV_RADIUS = 237
+local FOV_RADIUS = 230
 local TARGET_PART = "Head"
-local WALLCHECK = true
 local PREDICTION = 0.045
+local WALLCHECK = true
 local HEAD_OFFSET = Vector3.new(0, 0.15, 0)
 
 --// Utils
@@ -41,7 +38,6 @@ local function wallCheck(from, to, ignore)
     return not r or r.Instance:IsDescendantOf(ignore[2])
 end
 
---// Target selector
 local function getTarget()
     local best, bestDist = nil, FOV_RADIUS
     local center = Vector2.new(
@@ -66,8 +62,8 @@ local function getTarget()
                             head.Position,
                             { LP.Character, char }
                         ) then
-                            bestDist = dist
                             best = head
+                            bestDist = dist
                         end
                     end
                 end
@@ -78,28 +74,34 @@ local function getTarget()
     return best
 end
 
---// CORE AIM (sincronizado PC + Mobile)
-local function applyAim()
-    if not WSCamera or not WSCamera.currentCFrame then return end
+--// METAMETHOD HOOK (core do silent)
+local mt = getrawmetatable(game)
+local old = mt.__namecall
+setreadonly(mt, false)
 
-    local target = getTarget()
-    if not target then return end
+mt.__namecall = newcclosure(function(self, ...)
+    local args = { ... }
+    local method = getnamecallmethod()
 
-    local root = target.Parent:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+    if method == "Raycast" and self == Workspace then
+        local target = getTarget()
+        if target then
+            local root = target.Parent:FindFirstChild("HumanoidRootPart")
+            if root then
+                local predicted =
+                    target.Position
+                    + HEAD_OFFSET
+                    + root.AssemblyLinearVelocity * PREDICTION
 
-    local predictedPos =
-        target.Position
-        + HEAD_OFFSET
-        + root.AssemblyLinearVelocity * PREDICTION
+                args[1] = Camera.CFrame.Position
+                args[2] = (predicted - args[1])
 
-    local camPos = Camera.CFrame.Position
-    local aimCF = CFrame.lookAt(camPos, predictedPos)
+                return old(self, unpack(args))
+            end
+        end
+    end
 
-    -- sincroniza as duas câmeras
-    WSCamera.currentCFrame = aimCF
-    Camera.CFrame = aimCF
-end
+    return old(self, ...)
+end)
 
---// TIMING CORRETO
-RunService.Heartbeat:Connect(applyAim)
+setreadonly(mt, true)
