@@ -21,7 +21,7 @@ local WS = require(
 local WSCamera = WS.camera
 
 --// CONFIG
-local FOV_RADIUS = 60
+local FOV_RADIUS = 369
 local TARGET_PART = "Head"
 local PREDICTION = 0.045
 local HEAD_OFFSET = Vector3.new(0, 0.12, 0)
