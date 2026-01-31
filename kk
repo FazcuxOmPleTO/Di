@@ -5,7 +5,7 @@ local WindUI = loadstring(game:HttpGet(
 
 --// Create Window + Key System
 local Window = WindUI:CreateWindow({
-    Title = "Faz Completo",
+    Title = "Faz Completotest",
     Icon = "zap",
     Author = "Oi prazer sou o Lyrics",
     Folder = "FazCompleto",
