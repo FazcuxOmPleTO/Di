@@ -214,9 +214,9 @@ Tabs.Comprar:Button({Title="Gasolina ⛽", Callback=function() comprar("Jerry Ca
 -------------------------------------------------------
 
 Tabs.Combate:Button({
-    Title = "silent 100size",
+    Title = "silent 100",
     Callback = function()
-        --// WeaponSystem Silent Tracking (Mobile + Touch + PC)
+        --// WeaponSystem Silent Tracking (Mobile + PC FIX)
 
 --// Services
 local Players = game:GetService("Players")
@@ -243,6 +243,32 @@ local TARGET_PART = "Head"
 local PREDICTION = 0.045
 local HEAD_OFFSET = Vector3.new(0, 0.12, 0)
 
+--// INPUT STATE
+local firing = false
+
+-- Touch (Mobile)
+UserInputService.TouchStarted:Connect(function()
+    firing = true
+end)
+
+UserInputService.TouchEnded:Connect(function()
+    firing = false
+end)
+
+-- Mouse (PC)
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        firing = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        firing = false
+    end
+end)
+
 --// Utils
 local function worldToScreen(pos)
     local v, onScreen = Camera:WorldToViewportPoint(pos)
@@ -284,10 +310,11 @@ end
 
 --// CORE SILENT AIM
 local function applySilent()
+    if not firing then return end
     if not WSCamera or not WSCamera.currentCFrame then return end
 
     local weapon = WS.currentWeapon
-    if not weapon or not weapon.activated then return end
+    if not weapon then return end
 
     local target = getTarget()
     if not target then return end
@@ -304,7 +331,7 @@ local function applySilent()
     WSCamera.currentCFrame = CFrame.lookAt(camPos, predictedPos)
 end
 
---// Duplo timing (estável em mobile e PC)
+--// Duplo timing
 RunService.RenderStepped:Connect(applySilent)
 RunService.Heartbeat:Connect(applySilent)
     end
@@ -313,7 +340,7 @@ RunService.Heartbeat:Connect(applySilent)
 Tabs.Combate:Button({
     Title = "Silent Aim 25size",
     Callback = function()
-        --// WeaponSystem Silent Tracking (Mobile + Touch + PC)
+        --// WeaponSystem Silent Tracking (Mobile + PC FIX)
 
 --// Services
 local Players = game:GetService("Players")
@@ -340,6 +367,32 @@ local TARGET_PART = "Head"
 local PREDICTION = 0.045
 local HEAD_OFFSET = Vector3.new(0, 0.12, 0)
 
+--// INPUT STATE
+local firing = false
+
+-- Touch (Mobile)
+UserInputService.TouchStarted:Connect(function()
+    firing = true
+end)
+
+UserInputService.TouchEnded:Connect(function()
+    firing = false
+end)
+
+-- Mouse (PC)
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        firing = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        firing = false
+    end
+end)
+
 --// Utils
 local function worldToScreen(pos)
     local v, onScreen = Camera:WorldToViewportPoint(pos)
@@ -381,10 +434,11 @@ end
 
 --// CORE SILENT AIM
 local function applySilent()
+    if not firing then return end
     if not WSCamera or not WSCamera.currentCFrame then return end
 
     local weapon = WS.currentWeapon
-    if not weapon or not weapon.activated then return end
+    if not weapon then return end
 
     local target = getTarget()
     if not target then return end
@@ -401,7 +455,7 @@ local function applySilent()
     WSCamera.currentCFrame = CFrame.lookAt(camPos, predictedPos)
 end
 
---// Duplo timing (estável em mobile e PC)
+--// Duplo timing
 RunService.RenderStepped:Connect(applySilent)
 RunService.Heartbeat:Connect(applySilent)
     end
