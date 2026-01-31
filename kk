@@ -1,4 +1,4 @@
---// WeaponSystem REAL Silent Aim (PC + Mobile)
+--// WeaponSystem REAL Silent Aim (PC FIX)
 
 --// Services
 local Players = game:GetService("Players")
@@ -7,16 +7,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LP = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
-
---// WeaponSystem
-local WS = require(
-    ReplicatedStorage
-        :WaitForChild("WeaponsSystem")
-        :WaitForChild("WeaponsSystem")
-)
+local Mouse = LP:GetMouse()
 
 --// CONFIG
-local FOV_RADIUS = 230
+local FOV_RADIUS = 360
 local TARGET_PART = "Head"
 local PREDICTION = 0.045
 local WALLCHECK = true
@@ -74,16 +68,13 @@ local function getTarget()
     return best
 end
 
---// METAMETHOD HOOK (core do silent)
+--// METATABLE HOOK (PC REAL)
 local mt = getrawmetatable(game)
-local old = mt.__namecall
+local oldIndex = mt.__index
 setreadonly(mt, false)
 
-mt.__namecall = newcclosure(function(self, ...)
-    local args = { ... }
-    local method = getnamecallmethod()
-
-    if method == "Raycast" and self == Workspace then
+mt.__index = newcclosure(function(self, key)
+    if self == Mouse and (key == "Hit" or key == "UnitRay") then
         local target = getTarget()
         if target then
             local root = target.Parent:FindFirstChild("HumanoidRootPart")
@@ -93,15 +84,19 @@ mt.__namecall = newcclosure(function(self, ...)
                     + HEAD_OFFSET
                     + root.AssemblyLinearVelocity * PREDICTION
 
-                args[1] = Camera.CFrame.Position
-                args[2] = (predicted - args[1])
+                if key == "Hit" then
+                    return CFrame.new(predicted)
+                end
 
-                return old(self, unpack(args))
+                if key == "UnitRay" then
+                    local origin = Camera.CFrame.Position
+                    return Ray.new(origin, (predicted - origin).Unit * 1000)
+                end
             end
         end
     end
 
-    return old(self, ...)
+    return oldIndex(self, key)
 end)
 
 setreadonly(mt, true)
