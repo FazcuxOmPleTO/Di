@@ -1,4 +1,5 @@
---// WeaponSystem Silent Tracking (PC + Mobile REAL FIX)
+--// WeaponSystem Silent Tracking (PC + Mobile)
+--// Aim Tracker de bala (não move mouse, não força câmera)
 
 --// Services
 local Players = game:GetService("Players")
@@ -20,36 +21,10 @@ local WS = require(
 local WSCamera = WS.camera
 
 --// CONFIG
-local FOV_RADIUS = 100
+local FOV_RADIUS = 60
 local TARGET_PART = "Head"
 local PREDICTION = 0.045
 local HEAD_OFFSET = Vector3.new(0, 0.12, 0)
-
---// INPUT
-local firing = false
-
--- Mobile
-UserInputService.TouchStarted:Connect(function()
-    firing = true
-end)
-
-UserInputService.TouchEnded:Connect(function()
-    firing = false
-end)
-
--- PC
-UserInputService.InputBegan:Connect(function(i, gp)
-    if gp then return end
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-        firing = true
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-        firing = false
-    end
-end)
 
 --// Utils
 local function worldToScreen(pos)
@@ -57,42 +32,54 @@ local function worldToScreen(pos)
     return Vector2.new(v.X, v.Y), onScreen
 end
 
+--// Centro da mira (PC = mouse | Mobile = centro da tela)
+local function getAimCenter()
+    if UserInputService.TouchEnabled then
+        return Vector2.new(
+            Camera.ViewportSize.X / 2,
+            Camera.ViewportSize.Y / 2
+        )
+    else
+        local mousePos = UserInputService:GetMouseLocation()
+        return Vector2.new(mousePos.X, mousePos.Y)
+    end
+end
+
 --// Target selector
 local function getTarget()
-    local best, bestDist = nil, FOV_RADIUS
-    local center = Vector2.new(
-        Camera.ViewportSize.X / 2,
-        Camera.ViewportSize.Y / 2
-    )
+    local bestTarget = nil
+    local bestDist = FOV_RADIUS
+    local center = getAimCenter()
 
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LP and plr.Character then
             local char = plr.Character
             local hum = char:FindFirstChildOfClass("Humanoid")
-            local head = char:FindFirstChild(TARGET_PART)
+            local part = char:FindFirstChild(TARGET_PART)
             local root = char:FindFirstChild("HumanoidRootPart")
 
-            if hum and hum.Health > 0 and head and root then
-                local pos, on = worldToScreen(head.Position)
-                if on then
-                    local d = (pos - center).Magnitude
-                    if d < bestDist then
-                        bestDist = d
-                        best = head
+            if hum and hum.Health > 0 and part and root then
+                local screenPos, onScreen = worldToScreen(part.Position)
+                if onScreen then
+                    local dist = (screenPos - center).Magnitude
+                    if dist < bestDist then
+                        bestDist = dist
+                        bestTarget = part
                     end
                 end
             end
         end
     end
 
-    return best
+    return bestTarget
 end
 
---// SILENT CORE
-local function silentStep()
-    if not firing then return end
+--// CORE TRACKING (bala acompanha, não força câmera livre)
+local function applySilent()
     if not WSCamera or not WSCamera.currentCFrame then return end
-    if not WS.currentWeapon then return end
+
+    local weapon = WS.currentWeapon
+    if not weapon or not weapon.activated then return end
 
     local target = getTarget()
     if not target then return end
@@ -100,18 +87,15 @@ local function silentStep()
     local root = target.Parent:FindFirstChild("HumanoidRootPart")
     if not root then return end
 
-    local predicted =
+    local predictedPos =
         target.Position
         + HEAD_OFFSET
         + root.AssemblyLinearVelocity * PREDICTION
 
     local camPos = WSCamera.currentCFrame.Position
-    WSCamera.currentCFrame = CFrame.lookAt(camPos, predicted)
+    WSCamera.currentCFrame = CFrame.lookAt(camPos, predictedPos)
 end
 
--- 🔥 RODA DEPOIS DA CÂMERA (PC FIX)
-RunService:BindToRenderStep(
-    "SilentAfterCamera",
-    Enum.RenderPriority.Camera.Value + 1,
-    silentStep
-)
+--// Duplo timing (igual sistema base)
+RunService.RenderStepped:Connect(applySilent)
+RunService.Heartbeat:Connect(applySilent)
